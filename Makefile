@@ -10,6 +10,9 @@ SRC=main.cpp \
 	tela.cpp \
 	utils.cpp
 
+play: model
+	./snake-curses
+
 model: $(SRC)
 	g++ -osnake-curses $(SRC) $(CXXFLAGS)
 
