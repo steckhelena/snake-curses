@@ -8,9 +8,9 @@
 #include "audio.hpp"
 #include "body.hpp"
 #include "food.hpp"
+#include "keyboard.hpp"
 #include "physics.hpp"
 #include "snake.hpp"
-#include "teclado.hpp"
 #include "tela.hpp"
 #include "utils.hpp"
 
@@ -28,11 +28,11 @@ int main () {
 	player = new Audio::Player();
 	player->init();
 
+	KeyboardServer *keyServer = new KeyboardServer();
+	keyServer->init();
+
 	Tela *tela = new Tela();
 	tela->init();
-
-	Teclado *teclado = new Teclado();
-	teclado->init();
 
 	Snake *snake = new Snake(Vector2D(tela->getMaxX()/2, tela->getMaxY()/2), Vector2D(0,-10), 5);
 	Food *food = new Food(1, tela->getMaxX(), tela->getMaxY());
@@ -73,7 +73,7 @@ int main () {
 		}
 
 		// Lê o teclado
-		char c = teclado->getchar();
+		char c = keyServer->getchar();
 		if (c=='w') {
 			physics->goUp();
 		} else if (c=='a') {
@@ -91,6 +91,6 @@ int main () {
 	}
 
 	tela->stop();
-	teclado->stop();
+	keyServer->stop();
 	return 0;
 }
