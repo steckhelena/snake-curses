@@ -1,3 +1,13 @@
+CC=
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	CC=g++
+endif
+ifeq ($(UNAME_S),Darwin)
+	CC=/usr/local/bin/g++-7
+endif
+
 CXXFLAGS=-lncurses -lportaudio -lpthread -std=c++11
 
 SERVER_EXE=snake-curses-server
@@ -20,19 +30,19 @@ all: server client
 
 server: $(SRC)
 	@echo "Building server to \"$(SERVER_EXE)\"!"
-	@g++ -o$(SERVER_EXE) $(SERVER_SRC) $(CXXFLAGS)
+	@$(CC) -o$(SERVER_EXE) $(SERVER_SRC) $(CXXFLAGS)
 
 client: $(SRC)
 	@echo "Building client to \"$(CLIENT_EXE)\"!"
-	@g++ -o$(CLIENT_EXE) $(CLIENT_SRC) $(CXXFLAGS)
+	@$(CC) -o$(CLIENT_EXE) $(CLIENT_SRC) $(CXXFLAGS)
 
 debug_server: $(SRC)
 	@echo "Building debug server to \"$(SERVER_EXE)\"!"
-	@g++ -g -o$(SERVER_EXE) $(SERVER_SRC) $(CXXFLAGS)
+	@$(CC) -g -o$(SERVER_EXE) $(SERVER_SRC) $(CXXFLAGS)
 
 debug_client: $(SRC)
 	@echo "Building debug server to \"$(CLIENT_EXE)\"!"
-	@g++ -g -o$(CLIENT_EXE) $(CLIENT_SRC) $(CXXFLAGS)
+	@$(CC) -g -o$(CLIENT_EXE) $(CLIENT_SRC) $(CXXFLAGS)
 
 .PHONY: clean
 
