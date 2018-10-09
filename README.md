@@ -1,4 +1,4 @@
-# snake-curses
+# [snake-curses](https://github.com/steckmarco/snake-curses)
 Ncurses based snake game for EA872
 
 # Building:
