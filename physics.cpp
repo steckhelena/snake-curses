@@ -12,8 +12,9 @@
 #include "utils.hpp"
 
 Physics::Physics(Snake *snake, Food *food, int maxFood, int maxX, int maxY) {
-	win = false;
-	lost = false;
+	this->win = false;
+	this->lost = false;
+	this->score = 0;
 	movement_blocked = false;
 	this->food = food;
 	this->ate_food = false;
