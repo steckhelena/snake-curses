@@ -1,3 +1,5 @@
 *.swp
 plano.txt
 snake-curses
+snake-curses-server
+snake-curses-client
