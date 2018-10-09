@@ -11,6 +11,7 @@ Food::Food(int value, int maxX, int maxY) {
 	this->value = value;
 	this->frames = new BodyFrames(new BodyFrame(0, 0, FOOD_CHAR));
 	this->food = new BodyList();
+	this->n_food = 0;
 	srand(time(NULL));
 	spawn();
 }
