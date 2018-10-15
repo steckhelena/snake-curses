@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 
 #include "utils.hpp"
 
@@ -13,7 +13,7 @@ Vector2D::Vector2D(double x, double y) {
 }
 
 float Vector2D::norm() {
-	return sqrt(pow(this->x, 2.0) + pow(this->y, 2.0));
+	return std::sqrt(std::pow(this->x, 2.0) + std::pow(this->y, 2.0));
 }
 
 Vector2D Vector2D::operator -(const Vector2D other) {

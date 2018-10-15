@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <stdlib.h>
+#include <cmath>
 
 // Private includes
 #include "body.hpp"
@@ -99,7 +99,7 @@ BodyFrames *Body::getFrames() {
 }
 
 BodyFrame *Body::getCurrentFrame() {
-	if (abs(this->speed.x) > abs(this->speed.y)) {
+	if (std::abs(this->speed.x) > std::abs(this->speed.y)) {
 		if (this->speed.x > 0) {
 			return this->frames->getRight();
 		} else {
