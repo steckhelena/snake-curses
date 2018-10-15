@@ -1,12 +1,4 @@
-CC=
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	CC=g++
-endif
-ifeq ($(UNAME_S),Darwin)
-	CC=/usr/local/bin/g++-7
-endif
+CC=g++
 
 CXXFLAGS=-lncurses -lportaudio -lpthread -std=c++11
 
