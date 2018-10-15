@@ -52,8 +52,8 @@ bool KeyboardServer::init() {
 void KeyboardServer::stop() {
 	this->running = false;
 	(this->kb_thread).join();
-	char c = 'q';
-	send(this->socket_fd, &c, 1, 0);
+	close(this->connection_fd);
+	close(this->socket_fd);
 }
 
 char KeyboardServer::getchar() {
@@ -83,8 +83,7 @@ void KeyboardClient::thread () {
 		c = getch();
 		if (c!=ERR) {
 			int msglen = recv(this->socket_fd, &quit, 1, MSG_DONTWAIT);
-			if (msglen > 0 && quit == 'q') {
-				std::cout << "Finishing!" << std::endl;
+			if (msglen == 0) {
 				this->running = false;
 			} else if (send(this->socket_fd, &c, 1, 0) == -1) {
 				this->running = false;
@@ -128,5 +127,6 @@ bool KeyboardClient::init() {
 void KeyboardClient::stop() {
 	this->running = false;
 	(this->kb_thread).join();
+	close(this->socket_fd);
 	endwin();
 }
