@@ -1,8 +1,7 @@
 // Autor: Marco Antonio Steck Filho - RA:183374
-#include <stdlib.h>
 #include <algorithm>
 #include <vector>
-#include <fstream>
+#include <cmath>
 
 #include "ncurses.h"
 
@@ -36,7 +35,7 @@ void Physics::update(float deltaT) {
 	Vector2D speed = this->snake->getHeadSpeed();
 	lastDelta = lastDelta + (speed*deltaT)/1000.0f;
 	Vector2D delta_position = lastDelta - this->snake->getHeadPosition();
-	if (abs(delta_position.x) >= 1 || abs(delta_position.y) >= 1) {
+	if (std::abs(delta_position.x) >= 1 || std::abs(delta_position.y) >= 1) {
 		this->movement_blocked = false;
 		delta_position = Vector2D((int) delta_position.x, (int) delta_position.y);
 		vector<Body *> *b = this->snake->getBodyList()->getBodies();

@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 
 #include "ncurses.h"
 
@@ -12,15 +12,15 @@ Food::Food(int value, int maxX, int maxY) {
 	this->frames = new BodyFrames(new BodyFrame(0, 0, FOOD_CHAR));
 	this->food = new BodyList();
 	this->n_food = 0;
-	srand(time(NULL));
+	std::srand(std::time(NULL));
 	spawn();
 }
 
 void Food::spawn() {
 	int x, y;
 	do {
-	x = 1 + rand()%(this->maxX-2);
-	y = 1 + rand()%(this->maxY-2);
+	x = 1 + std::rand()%(this->maxX-2);
+	y = 1 + std::rand()%(this->maxY-2);
 	} while ((mvinch(y, x) & A_CHARTEXT) != ' ');
 	
 	this->n_food++;
