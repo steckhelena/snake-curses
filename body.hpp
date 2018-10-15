@@ -14,6 +14,9 @@ class BodyFrame {
 	private:
 		int pivot_x;
 		int pivot_y;
+
+		unsigned char color;
+
 		vector<string> frame;
 
 	public:
