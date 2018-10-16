@@ -26,13 +26,14 @@ class Vector2D {
 		Vector2D operator/(const float);
 
 		friend bool operator==(const Vector2D &a, const Vector2D &b);
+
+		friend Vector2D operator*(const float scalar, Vector2D vector);
+
+		friend Vector2D operator*(Vector2D vector, const float scalar);
+
+		friend std::ostream& operator<<(std::ostream &strm, Vector2D a);
 };
 
-Vector2D operator*(const float scalar, Vector2D vector);
-
-Vector2D operator*(Vector2D vector, const float scalar);
-
-std::ostream& operator<<(std::ostream &strm, Vector2D a);
 
 int sgn(int val);
 
