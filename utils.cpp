@@ -65,7 +65,6 @@ Vector2D operator*(Vector2D vector, const float scalar) {
 	return vector;
 }
 
-
 std::ostream& operator<<(std::ostream &strm, Vector2D a) {
   return strm << "(" << a.x << "," << a.y << ")";
 }
