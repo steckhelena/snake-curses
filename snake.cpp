@@ -3,13 +3,11 @@
 #include "snake.hpp"
 #include "utils.hpp"
 
-Snake::Snake(Vector2D position, Vector2D speed, int size){
-	this->frames = new BodyFrames(new BodyFrame(0, 0, SNAKE_CHAR));
-
+Snake::Snake(Vector2D position, Vector2D speed, int size) : frame(0, 0, SNAKE_CHAR) {
 	this->nodes = new BodyList();
 	for (int i=0; i<size; i++) {
 		Vector2D pos(position.x, position.y + i);
-		nodes->addBody(new Body(speed, pos, this->frames));
+		nodes->addBody(new Body(speed, pos, this->frame));
 	}
 }
 
@@ -39,6 +37,6 @@ void Snake::grow(int size) {
 		} else if (last->getSpeed().y != 0) {
 			delta_position.y -= sgn(last->getSpeed().y);
 		}
-		nodes->addBody(new Body(last->getSpeed(), delta_position, this->frames));
+		nodes->addBody(new Body(last->getSpeed(), delta_position, this->frame));
 	}
 }

@@ -7,7 +7,7 @@
 class Snake {
 	private:
 		BodyList *nodes;
-		BodyFrames *frames;
+		BodyFrame frame;
 	
 	public:
 		Snake(Vector2D position, Vector2D speed, int size);

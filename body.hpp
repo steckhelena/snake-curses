@@ -28,36 +28,19 @@ class BodyFrame {
 		vector<string> getFrame();
 };
 
-class BodyFrames {
-	private:
-		BodyFrame *up;
-		BodyFrame *down;
-		BodyFrame *left;
-		BodyFrame *right;
-
-	public:
-		BodyFrames(BodyFrame *up, BodyFrame *down,  BodyFrame *left, BodyFrame *right);
-		BodyFrames(BodyFrame *any);
-		BodyFrame *getUp();
-		BodyFrame *getDown();
-		BodyFrame *getLeft();
-		BodyFrame *getRight();
-};
-
 class Body {
 	private:
 		Vector2D speed;
 		Vector2D position;
-		BodyFrames *frames;
+		BodyFrame frame;
 
 	public:
-		Body(Vector2D speed, Vector2D position, BodyFrames *frames);
+		Body(Vector2D speed, Vector2D position, BodyFrame frame);
 		Vector2D getPosition();
 		void setPosition(Vector2D position);
 		Vector2D getSpeed();
 		void setSpeed(Vector2D speed);
-		BodyFrames *getFrames();
-		BodyFrame *getCurrentFrame();
+		BodyFrame getFrame();
 };
 
 class BodyList {

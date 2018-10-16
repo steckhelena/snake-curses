@@ -9,7 +9,7 @@ class Food {
 		int value;
 		int n_food;
 
-		BodyFrames *frames;
+		BodyFrame frame;
 		BodyList *food;
 
 		int maxX, maxY;
