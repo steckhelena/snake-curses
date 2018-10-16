@@ -44,13 +44,13 @@ void Tela::update() {
 			int i = (int) (body->getPosition().x);
 			int j = (int) (body->getPosition().y);
 
-			BodyFrame *frame = body->getCurrentFrame();
-			i -= frame->getPivotX();
-			j -= frame->getPivotY();
+			BodyFrame frame = body->getFrame();
+			i -= frame.getPivotX();
+			j -= frame.getPivotY();
 
 			int x = i;
 			int y = j;
-			for (string& line: frame->getFrame()) {
+			for (string& line: frame.getFrame()) {
 				y++;
 				for (char& ch: line) {
 					x++;

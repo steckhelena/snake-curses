@@ -47,35 +47,9 @@ int BodyFrame::getPivotY() {
 	return this->pivot_y;
 }
 
-BodyFrames::BodyFrames(BodyFrame *up, BodyFrame *down, BodyFrame *left, BodyFrame *right) {
-	this->up = up;
-	this->down = down;
-	this->left = left;
-	this->right = right;
-}
-
-BodyFrames::BodyFrames(BodyFrame *any) : BodyFrames(any, any, any, any) {}
-
-BodyFrame *BodyFrames::getUp() {
-	return this->up;
-}
-
-BodyFrame *BodyFrames::getDown() {
-	return this->down;
-}
-
-BodyFrame *BodyFrames::getLeft() {
-	return this->left;
-}
-
-BodyFrame *BodyFrames::getRight() {
-	return this->right;
-}
-
-Body::Body(Vector2D speed, Vector2D position, BodyFrames *frames) {
+Body::Body(Vector2D speed, Vector2D position, BodyFrame frame) : frame(frame){
 	this->speed = speed;
 	this->position = position;
-	this->frames = frames;
 }
 
 void Body::setPosition(Vector2D new_position) {
@@ -94,24 +68,8 @@ Vector2D Body::getSpeed() {
 	return this->speed;
 }
 
-BodyFrames *Body::getFrames() {
-	return this->frames;
-}
-
-BodyFrame *Body::getCurrentFrame() {
-	if (std::abs(this->speed.x) > std::abs(this->speed.y)) {
-		if (this->speed.x > 0) {
-			return this->frames->getRight();
-		} else {
-			return this->frames->getLeft();
-		}
-	} else {
-		if (this->speed.y < 0) {
-			return this->frames->getDown();
-		} else {
-			return this->frames->getUp();
-		}
-	}
+BodyFrame Body::getFrame() {
+	return this->frame;
 }
 
 BodyList::BodyList() {
@@ -122,7 +80,7 @@ void BodyList::hardCopy(BodyList *ldc) {
 	std::vector<Body *> *corpos = ldc->getBodies();
 
 	for (auto const& body: *corpos) {
-		Body *c = new Body(body->getPosition(), body->getSpeed(), body->getFrames());
+		Body *c = new Body(body->getPosition(), body->getSpeed(), body->getFrame());
 		this->addBody(c);
 	}
 }
