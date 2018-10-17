@@ -33,7 +33,7 @@ int mix_and_play (const void *inputBuffer, void *outputBuffer,
 		unsigned int pos = s->get_position();
 
 		// Fill the buffer with samples!
-		for (int i=0; (i<framesPerBuffer); i++) {
+		for (unsigned long i=0; (i<framesPerBuffer); i++) {
 			if (pos < data.size()) {
 				buffer[i] = data[pos];
 			} else {
@@ -45,7 +45,7 @@ int mix_and_play (const void *inputBuffer, void *outputBuffer,
 		}
 		s->set_position(pos);
 	} else {
-		for (int i=0; (i<framesPerBuffer); i++) {
+		for (unsigned long i=0; (i<framesPerBuffer); i++) {
 			buffer[i] = 0;
 		}
 	}
@@ -127,7 +127,7 @@ Sample *Player::get_data() {
 
 
 void Player::play() {
-	if (this->audio_sample != NULL) {
+	if (this->audio_sample != NULL && !this->playing) {
 		this->playing = true;
 	}
 }
