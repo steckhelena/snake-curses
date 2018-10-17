@@ -3,6 +3,14 @@
 #ifndef PHYSICS_HPP
 #define PHYSICS_HPP
 
+#include <algorithm>
+#include <vector>
+#include <cmath>
+#include <functional>
+
+#include "ncurses.h"
+#include <queue>
+
 #include "body.hpp"
 #include "food.hpp"
 #include "snake.hpp"
@@ -22,6 +30,7 @@ class Physics {
 		bool lost;
 
 		bool movement_blocked;
+		std::queue<std::function<void()>> action_queue;
 
 		int maxX;
 		int maxY;

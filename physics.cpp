@@ -1,14 +1,7 @@
 // Autor: Marco Antonio Steck Filho - RA:183374
-#include <algorithm>
-#include <vector>
-#include <cmath>
-
-#include "ncurses.h"
 
 // Private includes
-#include "body.hpp"
 #include "physics.hpp"
-#include "utils.hpp"
 
 Physics::Physics(Snake *snake, Food *food, int maxFood, int maxX, int maxY) {
 	this->win = false;
@@ -36,7 +29,14 @@ void Physics::update(float deltaT) {
 	lastDelta = lastDelta + (speed*deltaT)/1000.0f;
 	Vector2D delta_position = lastDelta - this->snake->getHeadPosition();
 	if (std::abs(delta_position.x) >= 1 || std::abs(delta_position.y) >= 1) {
+		// Enables movement again and dequeues until it is blocked again
 		this->movement_blocked = false;
+		while (!this->action_queue.empty() && !this->movement_blocked) {
+			this->action_queue.front()();
+			this->action_queue.pop();
+		}
+		
+		// Updates position of all snake parts
 		delta_position = Vector2D((int) delta_position.x, (int) delta_position.y);
 		vector<Body*> &b = this->snake->getBodies();
 		Vector2D ahead_position = delta_position + this->snake->getHeadPosition();
@@ -49,13 +49,17 @@ void Physics::update(float deltaT) {
 			ahead_position = this_last_position;
 			ahead_speed = this_last_speed;
 		}
+		// Resets delta so it doesnt accumulate forever
+		// May slow down snake if the loop takes too long
 		lastDelta = this->snake->getHeadPosition();
-
-		if ((int)lastDelta.x <= -1 || (int) lastDelta.x >= this->maxX-1 ||\
-			   	(int)lastDelta.y <= -1 || (int)lastDelta.y >= this->maxY-1) {
+		
+		// Checks if snake is in boundaries
+		if (lastDelta.x <= 0 || (int) lastDelta.x >= this->maxX ||\
+			   	lastDelta.y <= 0 || (int)lastDelta.y >= this->maxY) {
 			this->lost = true;
 		}
-
+		
+		// Checks if snake didn't collide with itself.
 		vector<Vector2D> positions;
 		for (Body *body: b) {
 			Vector2D current = body->getPosition();
@@ -67,7 +71,8 @@ void Physics::update(float deltaT) {
 			}
 			positions.push_back(current);
 		}
-
+		
+		// Checks if snake ate food
 		int i = 0;
 		this->ate_food = false;
 		for (Body *body: this->food->getBodies()) {
@@ -83,11 +88,13 @@ void Physics::update(float deltaT) {
 			this->food->despawnIndex(i);
 			this->score++;
 		}
-
+		
+		// Checks if snake hit max score
 		if (this->score >= MAX_SCORE) {
 			this->win = true;
 		}
-
+		
+		// Spawns new food if the number of food is less than max
 		if (this->food->getNumFood() < this->max_food) {
 			this->food->spawn();
 		}
@@ -95,35 +102,55 @@ void Physics::update(float deltaT) {
 }
 
 void Physics::goUp() {
-	if (this->snake->getHeadSpeed() != Vector2D(0, this->normSpeed) && !this->movement_blocked) {
-		this->snake->setHeadSpeed(Vector2D(0, -this->normSpeed));
-		this->movement_blocked = true;	
+	// Tries to register the movement, if it cant enqueues it so it can be registered eventually
+	if (!this->movement_blocked) {
+		if (this->snake->getHeadSpeed() != Vector2D(0, this->normSpeed) && 
+				this->snake->getHeadSpeed() != Vector2D(0, -this->normSpeed)) {
+			this->snake->setHeadSpeed(Vector2D(0, -this->normSpeed));
+			this->movement_blocked = true;
+		}
+	} else {
+		this->action_queue.push(std::bind(&Physics::goUp, this));
 	}
-	lastDelta = this->snake->getHeadPosition();
 }
 
 void Physics::goDown() {
-	if (this->snake->getHeadSpeed() != Vector2D(0, -this->normSpeed) && !this->movement_blocked) {
-		this->snake->setHeadSpeed(Vector2D(0, this->normSpeed));
-		this->movement_blocked = true;	
+	// Tries to register the movement, if it cant enqueues it so it can be registered eventually
+	if (!this->movement_blocked) {
+		if (this->snake->getHeadSpeed() != Vector2D(0, this->normSpeed) && 
+				this->snake->getHeadSpeed() != Vector2D(0, -this->normSpeed)) {
+			this->snake->setHeadSpeed(Vector2D(0, this->normSpeed));
+			this->movement_blocked = true;
+		}
+	} else {
+		this->action_queue.push(std::bind(&Physics::goDown, this));
 	}
-	lastDelta = this->snake->getHeadPosition();
 }
 
 void Physics::goLeft() {
-	if (this->snake->getHeadSpeed() != Vector2D(this->normSpeed, 0) && !this->movement_blocked) {
-		this->snake->setHeadSpeed(Vector2D(-this->normSpeed, 0));
-		this->movement_blocked = true;	
+	// Tries to register the movement, if it cant enqueues it so it can be registered eventually
+	if (!this->movement_blocked) {
+		if (this->snake->getHeadSpeed() != Vector2D(-this->normSpeed, 0) && 
+				this->snake->getHeadSpeed() != Vector2D(this->normSpeed, 0)) {
+			this->snake->setHeadSpeed(Vector2D(-this->normSpeed, 0));	
+			this->movement_blocked = true;
+		}
+	} else {
+		this->action_queue.push(std::bind(&Physics::goLeft, this));
 	}
-	lastDelta = this->snake->getHeadPosition();
 }
 
 void Physics::goRight() {
-	if (this->snake->getHeadSpeed() != Vector2D(-this->normSpeed, 0) && !this->movement_blocked) {
-		this->snake->setHeadSpeed(Vector2D(this->normSpeed, 0));	
-		this->movement_blocked = true;	
+	// Tries to register the movement, if it cant enqueues it so it can be registered eventually
+	if (!this->movement_blocked) {
+		if (this->snake->getHeadSpeed() != Vector2D(-this->normSpeed, 0) && 
+				this->snake->getHeadSpeed() != Vector2D(this->normSpeed, 0)) {
+			this->snake->setHeadSpeed(Vector2D(this->normSpeed, 0));	
+			this->movement_blocked = true;
+		}
+	} else {
+		this->action_queue.push(std::bind(&Physics::goRight, this));
 	}
-	lastDelta = this->snake->getHeadPosition();
 }
 
 bool Physics::didWin() {
