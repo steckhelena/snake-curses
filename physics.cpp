@@ -20,14 +20,21 @@ Physics::Physics(Snake *snake, Food *food, int maxFood, int maxX, int maxY) {
 
 
 void Physics::update(float deltaT) {
+	// Do not run if game is over
 	if (this->win || this->lost) {
 		this->ate_food = false;
 		return;
 	}
 
+	// Resets eat status
+	this->ate_food = false;
+
+	// Updates position
 	Vector2D speed = this->snake->getHeadSpeed();
 	lastDelta = lastDelta + (speed*deltaT)/1000.0f;
 	Vector2D delta_position = lastDelta - this->snake->getHeadPosition();
+	
+	// If significant position change updates snake
 	if (std::abs(delta_position.x) >= 1 || std::abs(delta_position.y) >= 1) {
 		// Enables movement again and dequeues until it is blocked again
 		this->movement_blocked = false;
@@ -74,7 +81,6 @@ void Physics::update(float deltaT) {
 		
 		// Checks if snake ate food
 		int i = 0;
-		this->ate_food = false;
 		for (Body *body: this->food->getBodies()) {
 			if (Vector2D((int)lastDelta.x, (int)lastDelta.y) == \
 					Vector2D((int)body->getPosition().x, (int)body->getPosition().y)) {
