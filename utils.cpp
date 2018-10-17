@@ -66,7 +66,11 @@ Vector2D operator*(Vector2D vector, const float scalar) {
 }
 
 std::ostream& operator<<(std::ostream &strm, Vector2D a) {
-  return strm << "(" << a.x << "," << a.y << ")";
+  return strm << a.x << '\n' << a.y;
+}
+
+std::istream& operator>>(std::istream &strm, Vector2D a) {
+  return strm >> a.x >> a.y;
 }
 
 int sgn(int val) {
