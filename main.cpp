@@ -34,11 +34,11 @@ int main () {
 	Tela *tela = new Tela();
 	tela->init();
 
-	Snake *snake = new Snake(Vector2D(tela->getMaxX()/2, tela->getMaxY()/2), Vector2D(0,-10), 5);
-	Food *food = new Food(1, tela->getMaxX(), tela->getMaxY());
+	Snake *snake = new Snake(Vector2D(tela->getMaxX()/2, tela->getMaxY()/2), Vector2D(0,-10), 5, 0);
+	Food *food = new Food(tela->getMaxX(), tela->getMaxY(), 0);
 
-	tela->appendList(snake->getBodyList());
-	tela->appendList(food->getBodyList());
+	tela->appendList(snake);
+	tela->appendList(food);
 
 	Physics *physics = new Physics(snake, food, 1, tela->getMaxX(), tela->getMaxY());
 
