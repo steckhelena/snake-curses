@@ -10,49 +10,41 @@
 
 using namespace std;
 
-class BodyFrame {
-	private:
-		int pivot_x;
-		int pivot_y;
-
-		unsigned char color;
-
-		vector<string> frame;
-
-	public:
-		BodyFrame(int pivot_x, int pivot_y, vector<string> frame);
-		BodyFrame(int pivot_x, int pivot_y, string frame);
-		BodyFrame(const BodyFrame &bf);
-		int getPivotX();
-		int getPivotY();
-		vector<string> getFrame();
-};
-
 class Body {
 	private:
 		Vector2D speed;
 		Vector2D position;
-		BodyFrame frame;
+
+		char frame;
+		unsigned char color;
 
 	public:
-		Body(Vector2D speed, Vector2D position, BodyFrame frame);
+		Body(Vector2D speed, Vector2D position, char frame, unsigned char color);
+
 		Vector2D getPosition();
 		void setPosition(Vector2D position);
+
 		Vector2D getSpeed();
 		void setSpeed(Vector2D speed);
-		BodyFrame getFrame();
+
+		char getFrame();
+		unsigned char getColor();
+
+		friend std::ostream& operator<<(std::ostream &strm, const Body &a);
+		friend std::istream& operator>>(std::istream &strm, Body &a);
 };
 
 class BodyList {
-	private:
-		vector<Body*> *bodies;
+	protected:
+		vector<Body *> bodies;
 
 	public:
-		BodyList();
-		void hardCopy(BodyList *ldc);
-		void addBody(Body *c);
-		void removeBody(Body *c);
-		vector<Body*> *getBodies();
+		void addBody(Body c);
+		void removeAt(int i);
+		vector<Body*> &getBodies();
+
+		friend std::ostream& operator<<(std::ostream &strm, const BodyList &a);
+		friend std::istream& operator>>(std::istream &strm, BodyList &a);
 };
 
 #endif //BODY_HPP

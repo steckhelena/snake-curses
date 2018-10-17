@@ -12,44 +12,11 @@
 
 using namespace std;
 
-BodyFrame::BodyFrame(int pivot_x, int pivot_y, vector<string> frame) {
-	this->pivot_x = pivot_x;
-	this->pivot_y = pivot_y;
-
-	this->frame = frame;
-}
-
-BodyFrame::BodyFrame(int pivot_x, int pivot_y, string frame) {
-	this->pivot_x = pivot_x;
-	this->pivot_y = pivot_y;
-
-	istringstream iss(frame);
-	for (string line; getline(iss, line); ) {
-		this->frame.push_back(line);
-	}
-}
-
-BodyFrame::BodyFrame(const BodyFrame &bf) {
-	pivot_x = bf.pivot_x;
-	pivot_y = bf.pivot_y;
-	frame = bf.frame;
-}
-
-vector<string> BodyFrame::getFrame() {
-	return this->frame;
-}
-
-int BodyFrame::getPivotX() {
-	return this->pivot_x;
-}
-
-int BodyFrame::getPivotY() {
-	return this->pivot_y;
-}
-
-Body::Body(Vector2D speed, Vector2D position, BodyFrame frame) : frame(frame){
+Body::Body(Vector2D speed, Vector2D position, char frame, unsigned char color){
 	this->speed = speed;
 	this->position = position;
+	this->frame = frame;
+	this->color = color;
 }
 
 void Body::setPosition(Vector2D new_position) {
@@ -68,38 +35,68 @@ Vector2D Body::getSpeed() {
 	return this->speed;
 }
 
-BodyFrame Body::getFrame() {
+char Body::getFrame() {
 	return this->frame;
 }
 
-BodyList::BodyList() {
-	this->bodies = new std::vector<Body *>(0);
+unsigned char Body::getColor() {
+	return this->color;
 }
 
-void BodyList::hardCopy(BodyList *ldc) {
-	std::vector<Body *> *corpos = ldc->getBodies();
+std::ostream& operator<<(std::ostream &strm, const Body &a) {
+	strm << a.color << "\n";
+	strm << a.frame << "\n";
+	strm << a.position << "\n";
+	strm << a.speed;
 
-	for (auto const& body: *corpos) {
-		Body *c = new Body(body->getPosition(), body->getSpeed(), body->getFrame());
-		this->addBody(c);
-	}
+	return strm;
 }
 
-void BodyList::addBody(Body *c) {
-	(this->bodies)->push_back(c);
+std::istream& operator>>(std::istream &strm, Body &a) {
+	strm >> a.color;
+	strm >> a.frame;
+	strm >> a.position;
+	strm >> a.speed;
+
+	return strm;
 }
 
-void BodyList::removeBody(Body *c) {
-	auto i = this->bodies->begin();
-	for (Body *body: *this->bodies) {
-		if (body == c) {
-			break;
+void BodyList::addBody(Body c) {
+	Body *b = new Body(c);
+	this->bodies.push_back(b);
+}
+
+void BodyList::removeAt(int i) {
+	this->bodies.erase(this->bodies.begin()+i);
+}
+
+std::vector<Body*> &BodyList::getBodies() {
+	return this->bodies;
+}
+
+std::ostream& operator<<(std::ostream &strm, const BodyList &a) {
+	strm << a.bodies.size() << "\n";
+
+	for (std::vector<Body *>::size_type i=0; i < a.bodies.size(); i++) {
+		if (i != a.bodies.size()-1) {
+			strm << *a.bodies[i] << "\n";
+		} else {
+			strm << *a.bodies[i];
 		}
-		i++;
 	}
-	this->bodies->erase(i);
+
+	return strm;
 }
 
-std::vector<Body*> *BodyList::getBodies() {
-	return (this->bodies);
+std::istream& operator>>(std::istream &strm, BodyList &a) {
+	std::vector<Body *>::size_type size;
+	strm >> size;
+
+	for (std::vector<Body *>::size_type i = 0; i < size; i++) {
+		Body b(Vector2D(), Vector2D(), 0, 0);
+		strm >> b;
+		a.addBody(b);
+	}
+
+	return strm;
 }
