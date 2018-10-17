@@ -47,7 +47,7 @@ void Tela::update() {
 			// Prints object if inside the screen
 			if ((x>=0 && x<this->maxX) && (y>=0 && y<this->maxY)) {
 				move(y, x);
-				echochar(ch);
+				addch(ch);
 			}
 		}
 	}
@@ -65,16 +65,16 @@ void Tela::showText(string text) {
 void Tela::makeBorder() {
 	for (int x=0; x<this->maxX; x++) {
 		move(0, x);
-		echochar(WALL_CHAR);
+		addch(WALL_CHAR);
 		move(this->maxY, x);
-		echochar(WALL_CHAR);
+		addch(WALL_CHAR);
 	}
 
 	for (int y=0; y<this->maxY; y++) {
 		move(y, 0);
-		echochar(WALL_CHAR);
+		addch(WALL_CHAR);
 		move(y, this->maxX);
-		echochar(WALL_CHAR);
+		addch(WALL_CHAR);
 	}
 }
 
