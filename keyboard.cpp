@@ -1,7 +1,37 @@
 // Autor: Marco Antonio Steck Filho - RA:183374
 
+#include <cstring>
+
 // Private includes
 #include "keyboard.hpp"
+
+/************************************************************************
+ * Helpers
+ ************************************************************************/
+
+int getSocketError(int fd) {
+   int err = 1;
+   socklen_t len = sizeof err;
+   if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
+      std::cerr << "Fatal error: getSO_ERROR" << std::endl;
+   if (err)
+      errno = err;              // set errno to the socket SO_ERROR
+   return err;
+}
+
+void closeSocket(int fd) {
+	if (fd >= 0) {
+		getSocketError(fd); // Limpa os erros que podem fazer o socket nao fechar
+		if (shutdown(fd, SHUT_RDWR) < 0) {
+			if (errno != ENOTCONN && errno != EINVAL) {
+				std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
+			}
+		}
+		if (close(fd) < 0) {// finally call close()
+			std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
+		}
+	}
+}
 
 /************************************************************************
  * KeyboardServer
@@ -14,9 +44,13 @@ void KeyboardServer::thread () {
 		int msglen = recv(this->connection_fd, &c, 1, MSG_DONTWAIT);
 		if (c != ERR && msglen > 0) {
 			this->last_capture = c;
+		} else if (c != ERR && msglen == 0) {
+			this->running = false;
 		}
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
 	}
+
+	closeSocket(this->connection_fd);
 	return;
 }
 
@@ -24,6 +58,7 @@ KeyboardServer::~KeyboardServer() {
 	if (this->running) {
 		this->stop();
 	}
+	closeSocket(this->socket_fd);
 }
 
 bool KeyboardServer::init() {
@@ -34,6 +69,7 @@ bool KeyboardServer::init() {
 	this->myself.sin_port = htons(KEYBOARD_PORT);
 	this->myself.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(this->socket_fd, (struct sockaddr*)&this->myself, sizeof(this->myself)) != 0) {
+		std::cerr << "Error binding: " << std::strerror(errno) << std::endl;
 		return false;
 	}
 
@@ -52,8 +88,6 @@ bool KeyboardServer::init() {
 void KeyboardServer::stop() {
 	this->running = false;
 	(this->kb_thread).join();
-	close(this->connection_fd);
-	close(this->socket_fd);
 }
 
 char KeyboardServer::getchar() {
@@ -87,6 +121,11 @@ void KeyboardClient::thread () {
 				this->running = false;
 			} else if (send(this->socket_fd, &c, 1, 0) == -1) {
 				this->running = false;
+			}
+			if (c == 'q') {
+				close(this->socket_fd);
+				this->running = false;
+				break;
 			}
 		}
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
@@ -127,6 +166,6 @@ bool KeyboardClient::init() {
 void KeyboardClient::stop() {
 	this->running = false;
 	(this->kb_thread).join();
-	close(this->socket_fd);
+	closeSocket(this->socket_fd);
 	endwin();
 }
