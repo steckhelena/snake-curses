@@ -4,18 +4,15 @@
 #include "utils.hpp"
 #include "body.hpp"
 
-class Snake {
-	private:
-		BodyList *nodes;
-		BodyFrame frame;
-	
+#define SNAKE_CHAR 'O'
+
+class Snake: public BodyList {
 	public:
-		Snake(Vector2D position, Vector2D speed, int size);
+		Snake(Vector2D position, Vector2D speed, int size, unsigned char color);
 		Vector2D getHeadSpeed();
 		void setHeadSpeed(Vector2D new_speed);
 		Vector2D getHeadPosition();
-		void grow(int size);
-		BodyList *getBodyList();
+		void grow();
 };
 		
 
