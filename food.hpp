@@ -4,22 +4,17 @@
 #include "body.hpp"
 #include "utils.hpp"
 
-class Food {
-	private:
-		int value;
-		int n_food;
+#define FOOD_CHAR 'X'
 
-		BodyFrame frame;
-		BodyList *food;
+class Food: public BodyList {
+	private:
+		unsigned char color;
 
 		int maxX, maxY;
-
 	public:
-		Food(int value, int maxX, int maxY);
+		Food(int maxX, int maxY, unsigned char color);
 		void spawn();
 		void despawnIndex(int i);
-		int getValue();
-		BodyList *getBodyList();
 		int getNumFood();
 };
 
