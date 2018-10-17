@@ -20,6 +20,8 @@ CLIENT_SRC=main_client.cpp \
 
 all: server client
 
+debug: debug_server debug_client
+
 server: $(SRC)
 	@echo "Building server to \"$(SERVER_EXE)\"!"
 	@$(CC) -o$(SERVER_EXE) $(SERVER_SRC) $(CXXFLAGS)
