@@ -4,8 +4,6 @@
 #include <iostream>
 
 #define WALL_CHAR '#'
-#define SNAKE_CHAR "O"
-#define FOOD_CHAR "X"
 #define MAX_SCORE 10
 
 class Vector2D {
@@ -28,10 +26,10 @@ class Vector2D {
 		friend bool operator==(const Vector2D &a, const Vector2D &b);
 
 		friend Vector2D operator*(const float scalar, Vector2D vector);
-
 		friend Vector2D operator*(Vector2D vector, const float scalar);
 
 		friend std::ostream& operator<<(std::ostream &strm, Vector2D a);
+		friend std::istream& operator>>(std::istream &strm, Vector2D a);
 };
 
 
