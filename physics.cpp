@@ -38,10 +38,10 @@ void Physics::update(float deltaT) {
 	if (std::abs(delta_position.x) >= 1 || std::abs(delta_position.y) >= 1) {
 		this->movement_blocked = false;
 		delta_position = Vector2D((int) delta_position.x, (int) delta_position.y);
-		vector<Body *> *b = this->snake->getBodyList()->getBodies();
+		vector<Body*> &b = this->snake->getBodies();
 		Vector2D ahead_position = delta_position + this->snake->getHeadPosition();
 		Vector2D ahead_speed = this->snake->getHeadSpeed();
-		for (Body *body: *b) {
+		for (Body *body: b) {
 			Vector2D this_last_position = body->getPosition();
 			Vector2D this_last_speed = body->getSpeed();
 			body->setPosition(ahead_position);
@@ -57,7 +57,7 @@ void Physics::update(float deltaT) {
 		}
 
 		vector<Vector2D> positions;
-		for (Body *body: *b) {
+		for (Body *body: b) {
 			Vector2D current = body->getPosition();
 			for (Vector2D pos: positions) {
 				if (pos == current) {
@@ -70,9 +70,10 @@ void Physics::update(float deltaT) {
 
 		int i = 0;
 		this->ate_food = false;
-		for (Body *body: *this->food->getBodyList()->getBodies()) {
-			if (Vector2D((int)lastDelta.x, (int)lastDelta.y) == Vector2D((int)body->getPosition().x, (int)body->getPosition().y)) {
-				this->snake->grow(this->food->getValue());
+		for (Body *body: this->food->getBodies()) {
+			if (Vector2D((int)lastDelta.x, (int)lastDelta.y) == \
+					Vector2D((int)body->getPosition().x, (int)body->getPosition().y)) {
+				this->snake->grow();
 				this->ate_food = true;
 				break;
 			}
