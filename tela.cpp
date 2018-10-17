@@ -34,33 +34,20 @@ void Tela::update() {
 
 	// Desenha uma caixa
 	makeBorder();
-	//wborder(stdscr, '|', '|', '_', '_', '*', '*', '*', '*');
 
 	// Desenha corpos na tela
 	for (BodyList *list: this->lista) {
-		std::vector<Body *> *corpos = list->getBodies();
+		std::vector<Body*> corpos = list->getBodies();
 
-		for (auto const& body: *corpos) {
-			int i = (int) (body->getPosition().x);
-			int j = (int) (body->getPosition().y);
+		for (auto &body: corpos) {
+			int x = body->getPosition().x;
+			int y = body->getPosition().y;
+			char ch = body->getFrame();
 
-			BodyFrame frame = body->getFrame();
-			i -= frame.getPivotX();
-			j -= frame.getPivotY();
-
-			int x = i;
-			int y = j;
-			for (string& line: frame.getFrame()) {
-				y++;
-				for (char& ch: line) {
-					x++;
-					// Prints object if inside the screen
-					if ((x>=0 && x<this->maxX) && (y>=0 && y<this->maxY)) {
-						move(y, x);
-						echochar(ch);
-					}
-				}
-				x = i;
+			// Prints object if inside the screen
+			if ((x>=0 && x<this->maxX) && (y>=0 && y<this->maxY)) {
+				move(y, x);
+				echochar(ch);
 			}
 		}
 	}
