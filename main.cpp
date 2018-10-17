@@ -1,6 +1,7 @@
 // Autor: Marco Antonio Steck Filho - RA:183374
 
 #include <iostream>
+#include <cmath>
 #include <chrono>
 #include <thread>
 #include <vector>
@@ -34,7 +35,7 @@ int main () {
 	Tela *tela = new Tela();
 	tela->init();
 
-	Snake *snake = new Snake(Vector2D(tela->getMaxX()/2, tela->getMaxY()/2), Vector2D(0,-10), 5, 0);
+	Snake *snake = new Snake(Vector2D(tela->getMaxX()/2, tela->getMaxY()/2), Vector2D(0,-12), 5, 0);
 	Food *food = new Food(tela->getMaxX(), tela->getMaxY(), 0);
 
 	tela->appendList(snake);
@@ -65,14 +66,14 @@ int main () {
 			tela->update();
 		}
 
-		// Toca audio ao comer
+		// Plays audio if player eats
 		if (physics->didEat()) {
 			on_food->set_position(0);
 			player->play(on_food);
-			on_food->reverse();
+			//on_food->reverse();
 		}
 
-		// Lê o teclado
+		// Reads keyboard
 		char c = keyServer->getchar();
 		if (c=='w') {
 			physics->goUp();
@@ -85,8 +86,9 @@ int main () {
 		} else if (c=='q') {
 			break;
 		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		
+		// Tries to keep the loop time constant
+		std::this_thread::sleep_for(std::chrono::milliseconds(std::max(10-(get_now_ms()-t1), (uint64_t)0)));
 		i++;
 	}
 
