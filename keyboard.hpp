@@ -9,6 +9,7 @@
 #include <thread>
 #include <iostream>
 #include <unistd.h>
+#include <mutex>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -32,6 +33,8 @@ class KeyboardServer {
 		socklen_t client_size;
 		int connection_fd;
 		struct sockaddr_in myself, client;
+
+		std::mutex mutex;
 
 	public:
 		~KeyboardServer();

@@ -42,12 +42,13 @@ void KeyboardServer::thread () {
 
 	while (this->running) {
 		int msglen = recv(this->connection_fd, &c, 1, MSG_DONTWAIT);
-		if (c != ERR && msglen > 0) {
+		this->mutex.lock();
+		if (c != ERR && msglen > 0 && this->last_capture == 0) {
 			this->last_capture = c;
 		} else if (c != ERR && msglen == 0) {
 			this->running = false;
 		}
-		std::this_thread::sleep_for (std::chrono::milliseconds(10));
+		this->mutex.unlock();
 	}
 
 	closeSocket(this->connection_fd);
@@ -91,8 +92,10 @@ void KeyboardServer::stop() {
 }
 
 char KeyboardServer::getchar() {
+	this->mutex.lock();
 	char c = this->last_capture;
 	this->last_capture = 0;
+	this->mutex.unlock();
 	return c;
 }
 
@@ -128,7 +131,7 @@ void KeyboardClient::thread () {
 				break;
 			}
 		}
-		std::this_thread::sleep_for (std::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 	return;
 }
