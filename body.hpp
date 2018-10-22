@@ -41,6 +41,9 @@ class BodyList {
 	public:
 		void addBody(Body c);
 		void removeAt(int i);
+
+		void rebuildFromString();
+
 		vector<Body*> &getBodies();
 
 		friend std::ostream& operator<<(std::ostream &strm, const BodyList &a);
