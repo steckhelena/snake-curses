@@ -63,7 +63,7 @@ int main () {
 		} else if (physics->didLose()) {
 			tela->showText("You lost M8!!");
 		} else {
-			tela->update();
+			tela->update(snake);
 		}
 
 		// Plays audio if player eats

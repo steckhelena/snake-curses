@@ -8,15 +8,16 @@
 class Tela {
 	private:
 		std::vector<BodyList *> lista;
-		int maxX, maxY;
-		void makeBorder();
+		int width, height;
+		int max_x, max_y;
+		void makeBorder(BodyList *target);
 
 	public:
 		~Tela();
 		void stop();
 		void init();
 		void appendList(BodyList *ldc);
-		void update();
+		void update(BodyList *target);
 		void showText(string text);
 		int getMaxX();
 		int getMaxY();
