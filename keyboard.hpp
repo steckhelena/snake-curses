@@ -34,12 +34,16 @@ class KeyboardServer {
 		int connection_fd;
 		struct sockaddr_in myself, client;
 
+		// Tells if class created its own socket
+		bool is_owner;
+
 		std::mutex mutex;
 
 	public:
 		~KeyboardServer();
 		void stop();
 		bool init();
+		bool init(int connecton_fd);
 		char getchar();
 };
 

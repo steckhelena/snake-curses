@@ -59,10 +59,14 @@ KeyboardServer::~KeyboardServer() {
 	if (this->running) {
 		this->stop();
 	}
-	closeSocket(this->socket_fd);
+	if (is_owner) {
+		closeSocket(this->socket_fd);
+	}
 }
 
 bool KeyboardServer::init() {
+	this->is_owner = true;
+
 	// Initializing server socket
 	this->client_size = (socklen_t)sizeof(this->client);
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -78,6 +82,19 @@ bool KeyboardServer::init() {
 	listen(this->socket_fd, 1);
 	std::cout << "\nWaiting for client keyboard connections!\n" << std::endl;
 	this->connection_fd = accept(socket_fd, (struct sockaddr*)&this->client, &this->client_size);
+
+	// Launches server thread
+	this->running = true;
+	this->kb_thread = std::thread(&KeyboardServer::thread, this);
+
+	return true;
+}
+
+bool KeyboardServer::init(int connection_fd) {
+	this->is_owner = false;
+
+	// Sets file descriptor
+	this->connection_fd = connection_fd;
 
 	// Launches server thread
 	this->running = true;
