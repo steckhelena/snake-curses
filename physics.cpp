@@ -16,6 +16,11 @@ Physics::Physics(Snake *snake, Food *food, int maxFood, int maxX, int maxY) {
 	lastDelta = this->snake->getHeadPosition();
 	this->maxX = maxX;
 	this->maxY = maxY;
+
+	// Spawns new food if the number of food is less than max
+	while (this->food->getNumFood() < this->max_food) {
+		this->food->spawn();
+	}
 }
 
 
@@ -93,16 +98,12 @@ void Physics::update(float deltaT) {
 		if (this->ate_food) {
 			this->food->despawnIndex(i);
 			this->score++;
+			this->food->spawn();
 		}
 		
 		// Checks if snake hit max score
 		if (this->score >= MAX_SCORE) {
 			this->win = true;
-		}
-		
-		// Spawns new food if the number of food is less than max
-		if (this->food->getNumFood() < this->max_food) {
-			this->food->spawn();
 		}
 	}
 }
