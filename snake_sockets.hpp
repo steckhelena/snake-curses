@@ -3,8 +3,8 @@
 #ifndef SNAKE_SERVER_HPP
 #define SNAKE_SERVER_HPP
 
-#include <mutex>
 #include <vector>
+#include <mutex>
 
 #include "body.hpp"
 #include "food.hpp"
@@ -31,6 +31,7 @@ namespace SnakeSockets {
 
 			void rebuildFromString(std::string &str);
 
+			bool started;
 			bool lost;
 			bool won;
 			bool ate;
@@ -63,7 +64,6 @@ namespace SnakeSockets {
 
 			// Threading
 			void updateClient(ClientInfo *client);
-			std::mutex mutex;
 			float deltaT;
 
 			// Socket stuff
@@ -82,7 +82,14 @@ namespace SnakeSockets {
 	};
 
 	class SnakeClient {
+		private:
+			// Threading
+			std::mutex bundle_lock;
+			void updateBundle();
 
+			// Socket stuff
+			int socket_fd;
+			struct sockaddr_in target;
 	};
 }
 
