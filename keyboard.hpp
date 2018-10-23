@@ -42,9 +42,13 @@ class KeyboardServer {
 	public:
 		~KeyboardServer();
 		void stop();
+
 		bool init();
 		bool init(int connecton_fd);
+
 		char getchar();
+
+		bool isAlive();
 };
 
 class KeyboardClient {
@@ -57,15 +61,18 @@ class KeyboardClient {
 		int socket_fd;
 		struct sockaddr_in target;
 
+		// Tells if class created its own socket
+		bool is_owner;
+
 		std::thread kb_thread;
 
-		std::string ip;
-
 	public:
-		KeyboardClient(std::string ip);
 		~KeyboardClient();
 		void stop();
-		bool init();
+
+		bool init(int connection_fd);
+		bool init(std::string ip);
+
 		bool isAlive();
 };
 

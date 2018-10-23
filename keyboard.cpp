@@ -9,17 +9,17 @@
  * Helpers
  ************************************************************************/
 
-int getSocketError(int fd) {
-   int err = 1;
-   socklen_t len = sizeof err;
-   if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
-      std::cerr << "Fatal error: getSO_ERROR" << std::endl;
-   if (err)
-      errno = err;              // set errno to the socket SO_ERROR
-   return err;
+static int getSocketError(int fd) {
+	int err = 1;
+	socklen_t len = sizeof err;
+	if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
+		std::cerr << "Fatal error: getSO_ERROR" << std::endl;
+	if (err)
+		errno = err;              // set errno to the socket SO_ERROR
+	return err;
 }
 
-void closeSocket(int fd) {
+static void closeSocket(int fd) {
 	if (fd >= 0) {
 		getSocketError(fd); // Limpa os erros que podem fazer o socket nao fechar
 		if (shutdown(fd, SHUT_RDWR) < 0) {
@@ -51,7 +51,9 @@ void KeyboardServer::thread () {
 		this->mutex.unlock();
 	}
 
-	closeSocket(this->connection_fd);
+	if (this->is_owner) {
+		closeSocket(this->connection_fd);
+	}
 	return;
 }
 
@@ -62,6 +64,10 @@ KeyboardServer::~KeyboardServer() {
 	if (is_owner) {
 		closeSocket(this->socket_fd);
 	}
+}
+
+bool KeyboardServer::isAlive() {
+	return this->running;	
 }
 
 bool KeyboardServer::init() {
@@ -120,11 +126,6 @@ char KeyboardServer::getchar() {
 /************************************************************************
  * KeyboardClient
  ************************************************************************/
-
-KeyboardClient::KeyboardClient(std::string ip) {
-	this->ip = ip;
-}
-
 KeyboardClient::~KeyboardClient() {
 	if (this->running) {
 		this->stop();
@@ -157,21 +158,36 @@ bool KeyboardClient::isAlive() {
 	return this->running;	
 }
 
-bool KeyboardClient::init() {
+bool KeyboardClient::init(int connection_fd) {
+	this->is_owner = false;
+
+	// Sets file descriptor
+	this->socket_fd = connection_fd;
+
+	// Launches server thread
+	this->running = true;
+	this->kb_thread = std::thread(&KeyboardClient::thread, this);
+
+	return true;
+}
+
+bool KeyboardClient::init(std::string ip) {
+	this->is_owner = true;
+
 	initscr();
 	raw();                  // Line buffering disabled
 	keypad(stdscr, TRUE);   // We get F1, F2 etc...
 	noecho();               // Don't echo() while we do getch
 	curs_set(0);            // Do not display cursor
 	nodelay(stdscr, TRUE);
-	
+
 	// Initializing server socket
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	// Trying to connect to server
 	this->target.sin_family = AF_INET;
 	this->target.sin_port = htons(KEYBOARD_PORT);
-	inet_aton(this->ip.c_str(), &(target.sin_addr));
+	inet_aton(ip.c_str(), &(target.sin_addr));
 	if (connect(this->socket_fd, (struct sockaddr*)&this->target, sizeof(target)) != 0) {
 		return false;
 	}
@@ -186,6 +202,8 @@ bool KeyboardClient::init() {
 void KeyboardClient::stop() {
 	this->running = false;
 	(this->kb_thread).join();
-	closeSocket(this->socket_fd);
+	if (this->is_owner) {
+		closeSocket(this->socket_fd);
+	}
 	endwin();
 }
