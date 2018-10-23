@@ -61,13 +61,25 @@ std::istream& operator>>(std::istream &strm, Body &a) {
 	return strm;
 }
 
-void BodyList::addBody(Body c) {
+void BodyList::addBody(Body &c) {
 	Body *b = new Body(c);
 	this->bodies.push_back(b);
+}
+void BodyList::append(BodyList &bl) {
+	for (Body *b: bl.getBodies()) {
+		this->addBody(*b);
+	}
 }
 
 void BodyList::removeAt(int i) {
 	this->bodies.erase(this->bodies.begin()+i);
+}
+
+void BodyList::clear() {
+	for (Body *body: this->bodies) {
+		delete body;
+	}
+	this->bodies.clear();
 }
 
 std::vector<Body*> &BodyList::getBodies() {
@@ -89,6 +101,8 @@ std::ostream& operator<<(std::ostream &strm, const BodyList &a) {
 }
 
 std::istream& operator>>(std::istream &strm, BodyList &a) {
+	a.clear();
+
 	std::vector<Body *>::size_type size;
 	strm >> size;
 

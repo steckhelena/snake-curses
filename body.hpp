@@ -39,10 +39,11 @@ class BodyList {
 		vector<Body *> bodies;
 
 	public:
-		void addBody(Body c);
-		void removeAt(int i);
+		void addBody(Body &c);
+		void append(BodyList &c);
 
-		void rebuildFromString();
+		void removeAt(int i);
+		void clear();
 
 		vector<Body*> &getBodies();
 
