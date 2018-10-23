@@ -95,6 +95,7 @@ namespace SnakeSockets {
 			SerializableBundle bundle;
 		
 		public:
+			SnakeClient();
 			~SnakeClient();
 
 			bool init(std::string ip);
@@ -102,7 +103,10 @@ namespace SnakeSockets {
 			void updateBodies(BodyList *bl);
 			void updateTarget(BodyList *b);
 
-			bool didStart();
+			bool isAlive();
+			bool didEat();
+			bool didLose();
+			bool didWin();
 	};
 }
 
