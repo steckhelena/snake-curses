@@ -46,20 +46,69 @@ namespace SnakeSockets {
 			int connection_fd;
 			connection_fd = accept(socket_fd, (struct sockaddr*)&this->client, &this->client_size);
 
-			// Creates client info object and launches client thread
-			ClientInfo *client = new ClientInfo;
+			// Creates client info object
+			ClientInfo *client = new ClientInfo();
 			client->connection_fd = connection_fd;
 			client->snake = new Snake(Vector2D(this->max_x/2 + 2*this->clients.size(), this->max_y/2),
 				   	Vector2D(0,this->snake_speed), 5, clients.size() + 1);
-			client->motor = new Physics(client->snake, food, this->max_food, this->max_x, this->max_y);
+			client->physics = new Physics(client->snake, food, this->max_food, this->max_x, this->max_y);
 			client->kbd_server = new KeyboardServer();
 			client->kbd_server->init(connection_fd);
+			client->running = true;
+			client->update_now = false;
+			client->send_now = false;
+
+			// Launches the client thread
+			client->client_thread = std::thread(&SnakeServer::updateClient, this, client);
+			
+			// Appends client to list
 			this->clients.push_back(client);
 		}
 
-		// Launches server thread
-		this->kb_thread = std::thread(&KeyboardServer::thread, this);
-
 		return true;
+	}
+
+	void SnakeServer::update(float deltaT) {
+		this->deltaT = deltaT;
+		
+		// Updates every client
+		for (ClientInfo *client: this->clients) {
+			client->update_now = true;
+		}
+		
+		// Waits for every client to update its snake
+		for (ClientInfo *client: this->clients) {
+			while (client->update_now);
+		}
+
+		// TODO: Check for collisons between clients
+		
+		// Sends bodies to clients
+		for (ClientInfo *client: this->clients) {
+			client->send_now = true;
+		}
+	}
+
+	void SnakeServer::updateClient(ClientInfo *client) {
+		while (client->running) {
+			while (!client->update_now) {
+				char c = client->kbd_server->getchar();
+				if (c=='w') {
+					client->physics->goUp();
+				} else if (c=='a') {
+					client->physics->goLeft();
+				} else if (c=='s') {
+					client->physics->goDown();
+				} else if (c=='d') {
+					client->physics->goRight();
+				} else if (c=='q') {
+					break;
+				}
+			}
+			client->physics->update(this->deltaT);
+			client->update_now = false;
+
+			while (!client->send_now);
+		}
 	}
 }

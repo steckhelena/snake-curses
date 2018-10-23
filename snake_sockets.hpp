@@ -15,22 +15,27 @@
 namespace SnakeSockets {
 	struct ClientInfo {
 		int connection_fd;
+		bool running;
+		bool update_now;
+		bool send_now;
 		Snake *snake;
-		Physics *motor;
+		Physics *physics;
 		KeyboardServer *kbd_server;
+		std::thread client_thread;
 	};
 
 	class SerializableBundle {
-		Snake *snake;
-		BodyList *all_bodies;
+		public:
+			BodyList *snake;
+			BodyList *all_bodies;
 
-		void rebuildFromString(std::string &str);
+			void rebuildFromString(std::string &str);
 
-		bool lost;
-		bool won;
-		bool ate;
+			bool lost;
+			bool won;
+			bool ate;
 
-		friend std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a);
+			friend std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a);
 	};
 
 	class SnakeServer {
@@ -53,10 +58,13 @@ namespace SnakeSockets {
 			
 			// Clients
 			int max_clients;
+			SerializableBundle base_bundle;
 			std::vector<ClientInfo *> clients;
 
 			// Threading
+			void updateClient(ClientInfo *client);
 			std::mutex mutex;
+			float deltaT;
 
 			// Socket stuff
 			int socket_fd;
