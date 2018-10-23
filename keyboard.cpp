@@ -161,6 +161,12 @@ bool KeyboardClient::isAlive() {
 bool KeyboardClient::init(int connection_fd) {
 	this->is_owner = false;
 
+	raw();                  // Line buffering disabled
+	keypad(stdscr, TRUE);   // We get F1, F2 etc...
+	noecho();               // Don't echo() while we do getch
+	curs_set(0);            // Do not display cursor
+	nodelay(stdscr, TRUE);
+
 	// Sets file descriptor
 	this->socket_fd = connection_fd;
 
