@@ -70,19 +70,26 @@ namespace SnakeSockets {
 
 	void SnakeServer::update(float deltaT) {
 		this->deltaT = deltaT;
-		
+
 		// Updates every client
 		for (ClientInfo *client: this->clients) {
 			client->update_now = true;
 		}
-		
+
 		// Waits for every client to update its snake
 		for (ClientInfo *client: this->clients) {
 			while (client->update_now);
 		}
 
 		// TODO: Check for collisons between clients
-		
+
+		// Builds base bundle
+		this->base_bundle.all_bodies->clear();
+		this->base_bundle.all_bodies->append(*this->food);
+		for (ClientInfo *client: this->clients) {
+			this->base_bundle.all_bodies->append(*client->snake);
+		}
+
 		// Sends bodies to clients
 		for (ClientInfo *client: this->clients) {
 			client->send_now = true;
