@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream &strm, Vector2D a) {
   return strm << a.x << '\n' << a.y;
 }
 
-std::istream& operator>>(std::istream &strm, Vector2D a) {
+std::istream& operator>>(std::istream &strm, Vector2D &a) {
   return strm >> a.x >> a.y;
 }
 

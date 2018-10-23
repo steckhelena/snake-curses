@@ -29,7 +29,7 @@ class Vector2D {
 		friend Vector2D operator*(Vector2D vector, const float scalar);
 
 		friend std::ostream& operator<<(std::ostream &strm, Vector2D a);
-		friend std::istream& operator>>(std::istream &strm, Vector2D a);
+		friend std::istream& operator>>(std::istream &strm, Vector2D &a);
 };
 
 
