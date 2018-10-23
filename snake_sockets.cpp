@@ -2,13 +2,99 @@
 
 #include <cstring>
 #include <unistd.h>
-#include <mutex>
+#include <string>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include "snake_sockets.hpp"
+
+/************************************************************************
+ * Helpers
+ ************************************************************************/
+
+static int getSocketError(int fd) {
+   int err = 1;
+   socklen_t len = sizeof err;
+   if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
+      std::cerr << "Fatal error: getSO_ERROR" << std::endl;
+   if (err)
+      errno = err;              // set errno to the socket SO_ERROR
+   return err;
+}
+
+static void closeSocket(int fd) {
+	if (fd >= 0) {
+		getSocketError(fd); // Limpa os erros que podem fazer o socket nao fechar
+		if (shutdown(fd, SHUT_RDWR) < 0) {
+			if (errno != ENOTCONN && errno != EINVAL) {
+				std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
+			}
+		}
+		if (close(fd) < 0) {// finally call close()
+			std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
+		}
+	}
+}
+
+static int send_int(int fd, int num) {
+    int32_t conv = htonl(num);
+    char *data = (char*)&conv;
+    int left = sizeof(conv);
+    int rc;
+    do {
+        rc = send(fd, data, left, 0);
+        if (rc < 0) {
+            if (errno != EINTR) {
+                return -1;
+            }
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    return 0;
+}
+
+static int receive_int(int fd, int *num) {
+    int32_t ret;
+    char *data = (char*)&ret;
+    int left = sizeof(ret);
+    int rc;
+    do {
+        rc = recv(fd, data, left, 0);
+        if (rc <= 0) {
+            if (errno != EINTR) {
+                return -1;
+            }
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    *num = ntohl(ret);
+    return 0;
+}
+/************************************************************************
+ * SerializableBundle
+ ************************************************************************/
+namespace SnakeSockets {
+	std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a) {
+		strm << a.snake << "\n";
+		strm << a.all_bodies << "\n";
+		strm << a.lost << "\n";
+		strm << a.won << "\n";
+		strm << a.ate << "\n";
+
+		return strm;
+	}
+}
 
 /************************************************************************
  * SnakeServer
@@ -73,12 +159,16 @@ namespace SnakeSockets {
 
 		// Updates every client
 		for (ClientInfo *client: this->clients) {
-			client->update_now = true;
+			if (client->running) {
+				client->update_now = true;
+			}
 		}
 
 		// Waits for every client to update its snake
 		for (ClientInfo *client: this->clients) {
-			while (client->update_now);
+			if (client->running) {
+				while (client->update_now);
+			}
 		}
 
 		// TODO: Check for collisons between clients
@@ -87,13 +177,32 @@ namespace SnakeSockets {
 		this->base_bundle.all_bodies->clear();
 		this->base_bundle.all_bodies->append(*this->food);
 		for (ClientInfo *client: this->clients) {
-			this->base_bundle.all_bodies->append(*client->snake);
+			if (client->running) {
+				this->base_bundle.all_bodies->append(*client->snake);
+			}
+		}
+
+		// Checks if someone won
+		for (ClientInfo *client: this->clients) {
+			if (client->physics->didWin()) {
+				this->ended = true;
+			}
 		}
 
 		// Sends bodies to clients
 		for (ClientInfo *client: this->clients) {
-			client->send_now = true;
+			if (client->running) {
+				client->send_now = true;
+			}
 		}
+
+		// Waits for every client to send its bundle
+		for (ClientInfo *client: this->clients) {
+			if (client->running) {
+				while (client->update_now);
+			}
+		}
+
 	}
 
 	void SnakeServer::updateClient(ClientInfo *client) {
@@ -109,13 +218,43 @@ namespace SnakeSockets {
 				} else if (c=='d') {
 					client->physics->goRight();
 				} else if (c=='q') {
-					break;
+					client->running = false;
 				}
+			}
+
+			if (!client->kbd_server->isAlive()) {
+				client->running = false;
+				closeSocket(client->connection_fd);
 			}
 			client->physics->update(this->deltaT);
 			client->update_now = false;
 
 			while (!client->send_now);
+
+			SerializableBundle bundle = this->base_bundle;
+			bundle.ate = client->physics->didEat();
+			bundle.won = client->physics->didWin();
+			if (this->ended && !client->physics->didWin()) {
+				bundle.lost = true;
+			} else {
+				bundle.lost = client->physics->didLose();
+			}
+			bundle.snake = client->snake;
+
+			std::ostringstream strm;
+			strm << bundle;
+
+			if (send_int(client->connection_fd, strm.str().length()) == -1) {
+				client->running = false;
+				client->send_now = false;
+				closeSocket(client->connection_fd);
+			} else if (send(client->connection_fd, strm.str().c_str(), strm.str().length(), 0) == -1) {
+				client->running = false;
+				client->send_now = false;
+				closeSocket(client->connection_fd);
+			}
+			
+			client->send_now = false;
 		}
 	}
 }
