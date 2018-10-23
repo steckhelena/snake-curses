@@ -6,7 +6,8 @@
 Snake::Snake(Vector2D position, Vector2D speed, int size, unsigned char color) {
 	for (int i=0; i<size; i++) {
 		Vector2D pos(position.x, position.y + i);
-		this->addBody(Body(speed, pos, SNAKE_CHAR, color));
+		Body snake_part(speed, pos, SNAKE_CHAR, color);
+		this->addBody(snake_part);
 	}
 }
 
@@ -31,5 +32,6 @@ void Snake::grow() {
 	} else if (last->getSpeed().y != 0) {
 		delta_position.y -= sgn(last->getSpeed().y);
 	}
-	this->addBody(Body(last->getSpeed(), delta_position, SNAKE_CHAR, last->getColor()));
+	Body snake_part(last->getSpeed(), delta_position, SNAKE_CHAR, last->getColor());
+	this->addBody(snake_part);
 }
