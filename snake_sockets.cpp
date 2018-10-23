@@ -81,9 +81,11 @@ static int receive_int(int fd, int *num) {
     *num = ntohl(ret);
     return 0;
 }
+
 /************************************************************************
  * SerializableBundle
  ************************************************************************/
+
 namespace SnakeSockets {
 	std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a) {
 		strm << a.snake << "\n";
@@ -93,6 +95,15 @@ namespace SnakeSockets {
 		strm << a.ate << "\n";
 
 		return strm;
+	}
+
+	void SerializableBundle::rebuildFromString(std::string &serialized) {
+		std::istringstream strm(serialized);
+		strm >> *this->snake;
+		strm >> *this->all_bodies;
+		strm >> this->lost;
+		strm >> this->won;
+		strm >> this->ate;
 	}
 }
 
@@ -224,6 +235,7 @@ namespace SnakeSockets {
 
 			if (!client->kbd_server->isAlive()) {
 				client->running = false;
+				client->update_now = false;
 				closeSocket(client->connection_fd);
 			}
 			client->physics->update(this->deltaT);
@@ -256,5 +268,83 @@ namespace SnakeSockets {
 			
 			client->send_now = false;
 		}
+	}
+}
+
+/************************************************************************
+ * SnakeClient
+ ************************************************************************/
+
+namespace SnakeSockets {
+	bool SnakeClient::init(std::string ip) {
+		// Initializing server socket
+		this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+		// Trying to connect to server
+		this->target.sin_family = AF_INET;
+		this->target.sin_port = htons(KEYBOARD_PORT);
+		inet_aton(ip.c_str(), &(target.sin_addr));
+		if (connect(this->socket_fd, (struct sockaddr*)&this->target, sizeof(target)) != 0) {
+			return false;
+		}
+
+		// Launches keyboard thread
+		this->kbd_client.init(this->socket_fd);
+
+		// Launches client update thread
+		this->client_thread = std::thread(&SnakeClient::updateBundle, this);
+
+		return true;
+	}
+
+	void SnakeClient::updateBundle() {
+		while (this->kbd_client.isAlive()){
+			int message_size;
+
+			if (receive_int(this->socket_fd, &message_size) == -1) {
+				this->kbd_client.stop();
+				break;
+			}
+
+			char *message_buff = new char[message_size+1];
+			char *message_pointer = message_buff;
+			int bytes_left = message_size;
+			
+			while (bytes_left > 0 && this->kbd_client.isAlive()) {
+				int last_read_size = recv(this->socket_fd, message_pointer, bytes_left, 0);
+				if (last_read_size <= 0) {
+					this->kbd_client.stop();
+				} else {
+					message_pointer += last_read_size;
+					bytes_left -= last_read_size;
+				}
+			}
+
+			// Makes sure message is null terminated
+			message_buff[message_size] = '\0';
+
+			if (this->kbd_client.isAlive()) {
+				// Converts buffer to string
+				std::string message_string(message_buff);
+
+				// Critical session, locks to prevent bundle being read 
+				// while it is being updated
+				this->bundle_lock.lock();
+				this->bundle.rebuildFromString(message_string);
+				this->bundle_lock.unlock();
+			}
+		}
+	}
+	void SnakeClient::updateBodies(BodyList *bl) {
+		this->bundle_lock.lock();
+		bl->clear();
+		bl->append(*this->bundle.all_bodies);
+		this->bundle_lock.unlock();
+	}
+	void SnakeClient::updateTarget(BodyList *bl) {
+		this->bundle_lock.lock();
+		bl->clear();
+		bl->append(*this->bundle.snake);
+		this->bundle_lock.unlock();
 	}
 }

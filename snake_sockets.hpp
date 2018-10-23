@@ -31,7 +31,6 @@ namespace SnakeSockets {
 
 			void rebuildFromString(std::string &str);
 
-			bool started;
 			bool lost;
 			bool won;
 			bool ate;
@@ -85,11 +84,25 @@ namespace SnakeSockets {
 		private:
 			// Threading
 			std::mutex bundle_lock;
+			KeyboardClient kbd_client;
+			std::thread client_thread;
 			void updateBundle();
 
 			// Socket stuff
 			int socket_fd;
 			struct sockaddr_in target;
+			
+			SerializableBundle bundle;
+		
+		public:
+			~SnakeClient();
+
+			bool init(std::string ip);
+
+			void updateBodies(BodyList *bl);
+			void updateTarget(BodyList *b);
+
+			bool didStart();
 	};
 }
 
