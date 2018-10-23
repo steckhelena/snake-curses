@@ -12,7 +12,7 @@
 
 using namespace std;
 
-Body::Body(Vector2D speed, Vector2D position, char frame, unsigned char color){
+Body::Body(Vector2D speed, Vector2D position, char frame, unsigned int color){
 	this->speed = speed;
 	this->position = position;
 	this->frame = frame;
