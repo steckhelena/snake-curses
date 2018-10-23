@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -16,13 +17,13 @@
  ************************************************************************/
 
 static int getSocketError(int fd) {
-   int err = 1;
-   socklen_t len = sizeof err;
-   if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
-      std::cerr << "Fatal error: getSO_ERROR" << std::endl;
-   if (err)
-      errno = err;              // set errno to the socket SO_ERROR
-   return err;
+	int err = 1;
+	socklen_t len = sizeof err;
+	if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
+		std::cerr << "Fatal error: getSO_ERROR" << std::endl;
+	if (err)
+		errno = err;              // set errno to the socket SO_ERROR
+	return err;
 }
 
 static void closeSocket(int fd) {
@@ -40,46 +41,46 @@ static void closeSocket(int fd) {
 }
 
 static int send_int(int fd, int num) {
-    int32_t conv = htonl(num);
-    char *data = (char*)&conv;
-    int left = sizeof(conv);
-    int rc;
-    do {
-        rc = send(fd, data, left, 0);
-        if (rc < 0) {
-            if (errno != EINTR) {
-                return -1;
-            }
-        }
-        else {
-            data += rc;
-            left -= rc;
-        }
-    }
-    while (left > 0);
-    return 0;
+	int32_t conv = htonl(num);
+	char *data = (char*)&conv;
+	int left = sizeof(conv);
+	int rc;
+	do {
+		rc = send(fd, data, left, 0);
+		if (rc < 0) {
+			if (errno != EINTR) {
+				return -1;
+			}
+		}
+		else {
+			data += rc;
+			left -= rc;
+		}
+	}
+	while (left > 0);
+	return 0;
 }
 
 static int receive_int(int fd, int *num) {
-    int32_t ret;
-    char *data = (char*)&ret;
-    int left = sizeof(ret);
-    int rc;
-    do {
-        rc = recv(fd, data, left, 0);
-        if (rc <= 0) {
-            if (errno != EINTR) {
-                return -1;
-            }
-        }
-        else {
-            data += rc;
-            left -= rc;
-        }
-    }
-    while (left > 0);
-    *num = ntohl(ret);
-    return 0;
+	int32_t ret;
+	char *data = (char*)&ret;
+	int left = sizeof(ret);
+	int rc;
+	do {
+		rc = recv(fd, data, left, 0);
+		if (rc <= 0) {
+			if (errno != EINTR) {
+				return -1;
+			}
+		}
+		else {
+			data += rc;
+			left -= rc;
+		}
+	}
+	while (left > 0);
+	*num = ntohl(ret);
+	return 0;
 }
 
 /************************************************************************
@@ -88,8 +89,8 @@ static int receive_int(int fd, int *num) {
 
 namespace SnakeSockets {
 	std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a) {
-		strm << a.snake << "\n";
-		strm << a.all_bodies << "\n";
+		strm << *a.snake << "\n";
+		strm << *a.all_bodies << "\n";
 		strm << a.lost << "\n";
 		strm << a.won << "\n";
 		strm << a.ate << "\n";
@@ -120,7 +121,16 @@ namespace SnakeSockets {
 		this->max_y = max_y;
 		this->max_clients = max_clients;
 
+		this->started = false;
+
 		this->food = new Food(this->max_x, this->max_y, 0);
+
+		this->base_bundle.all_bodies = new BodyList();
+		this->base_bundle.snake = new BodyList();
+	}
+
+	SnakeServer::~SnakeServer() {
+		// TODO: close socket/join threads, do memory cleanup on bundle
 	}
 
 	bool SnakeServer::init() {
@@ -136,7 +146,7 @@ namespace SnakeSockets {
 
 		// Listens for connections
 		listen(this->socket_fd, 1);
-		std::cout << "\nWaiting for client keyboard connections!\n" << std::endl;
+		std::cout << "\nWaiting for client connections!\n" << std::endl;
 
 		// Waits for clients to connect
 		while (this->clients.size() < (unsigned long) this->max_clients) {
@@ -147,7 +157,7 @@ namespace SnakeSockets {
 			ClientInfo *client = new ClientInfo();
 			client->connection_fd = connection_fd;
 			client->snake = new Snake(Vector2D(this->max_x/2 + 2*this->clients.size(), this->max_y/2),
-				   	Vector2D(0,this->snake_speed), 5, clients.size() + 1);
+					Vector2D(0,this->snake_speed), 5, clients.size() + 1);
 			client->physics = new Physics(client->snake, food, this->max_food, this->max_x, this->max_y);
 			client->kbd_server = new KeyboardServer();
 			client->kbd_server->init(connection_fd);
@@ -157,10 +167,14 @@ namespace SnakeSockets {
 
 			// Launches the client thread
 			client->client_thread = std::thread(&SnakeServer::updateClient, this, client);
-			
+
 			// Appends client to list
 			this->clients.push_back(client);
+
+			std::cout << "\nNew client connected!\n" << "Max: " << this->max_clients << " Current: " << this->clients.size() << std::endl;
 		}
+
+		this->started = true;
 
 		return true;
 	}
@@ -220,16 +234,18 @@ namespace SnakeSockets {
 		while (client->running) {
 			while (!client->update_now) {
 				char c = client->kbd_server->getchar();
-				if (c=='w') {
-					client->physics->goUp();
-				} else if (c=='a') {
-					client->physics->goLeft();
-				} else if (c=='s') {
-					client->physics->goDown();
-				} else if (c=='d') {
-					client->physics->goRight();
-				} else if (c=='q') {
-					client->running = false;
+				if (this->started) {
+					if (c=='w') {
+						client->physics->goUp();
+					} else if (c=='a') {
+						client->physics->goLeft();
+					} else if (c=='s') {
+						client->physics->goDown();
+					} else if (c=='d') {
+						client->physics->goRight();
+					} else if (c=='q') {
+						client->running = false;
+					}
 				}
 			}
 
@@ -256,6 +272,8 @@ namespace SnakeSockets {
 			std::ostringstream strm;
 			strm << bundle;
 
+			std::cout << "Sending: \n" << strm.str().c_str() << "\nSize: " << std::strlen(strm.str().c_str()) << std::endl;
+
 			if (send_int(client->connection_fd, strm.str().length()) == -1) {
 				client->running = false;
 				client->send_now = false;
@@ -265,7 +283,7 @@ namespace SnakeSockets {
 				client->send_now = false;
 				closeSocket(client->connection_fd);
 			}
-			
+
 			client->send_now = false;
 		}
 	}
@@ -276,6 +294,15 @@ namespace SnakeSockets {
  ************************************************************************/
 
 namespace SnakeSockets {
+	SnakeClient::SnakeClient() {
+		this->bundle.all_bodies = new BodyList();
+		this->bundle.snake = new BodyList();
+	}
+
+	SnakeClient::~SnakeClient() {
+		// TODO: close socket/join threads, do memory cleanup on bundle
+	}
+
 	bool SnakeClient::init(std::string ip) {
 		// Initializing server socket
 		this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -291,6 +318,9 @@ namespace SnakeSockets {
 		// Launches keyboard thread
 		this->kbd_client.init(this->socket_fd);
 
+		// Waits for keyboard to come online:
+		while (!this->kbd_client.isAlive());
+
 		// Launches client update thread
 		this->client_thread = std::thread(&SnakeClient::updateBundle, this);
 
@@ -298,6 +328,9 @@ namespace SnakeSockets {
 	}
 
 	void SnakeClient::updateBundle() {
+		std::ofstream myfile;
+		myfile.open ("example.txt", ios::out);
+
 		while (this->kbd_client.isAlive()){
 			int message_size;
 
@@ -306,10 +339,12 @@ namespace SnakeSockets {
 				break;
 			}
 
+			myfile << "To receive: " << message_size << std::endl;
+
 			char *message_buff = new char[message_size+1];
 			char *message_pointer = message_buff;
 			int bytes_left = message_size;
-			
+
 			while (bytes_left > 0 && this->kbd_client.isAlive()) {
 				int last_read_size = recv(this->socket_fd, message_pointer, bytes_left, 0);
 				if (last_read_size <= 0) {
@@ -327,24 +362,56 @@ namespace SnakeSockets {
 				// Converts buffer to string
 				std::string message_string(message_buff);
 
+				myfile << "Received: \n" << message_string;
+
 				// Critical session, locks to prevent bundle being read 
 				// while it is being updated
 				this->bundle_lock.lock();
 				this->bundle.rebuildFromString(message_string);
 				this->bundle_lock.unlock();
+				myfile << "Bundle is now: " << this->bundle << std::endl;
 			}
+
 		}
+		myfile.close();
 	}
+
 	void SnakeClient::updateBodies(BodyList *bl) {
 		this->bundle_lock.lock();
 		bl->clear();
 		bl->append(*this->bundle.all_bodies);
 		this->bundle_lock.unlock();
 	}
+
 	void SnakeClient::updateTarget(BodyList *bl) {
 		this->bundle_lock.lock();
 		bl->clear();
 		bl->append(*this->bundle.snake);
 		this->bundle_lock.unlock();
+	}
+
+	bool SnakeClient::isAlive() {
+		return this->kbd_client.isAlive();
+	}
+
+	bool SnakeClient::didEat() {
+		this->bundle_lock.lock();
+		bool ate = this->bundle.ate;
+		this->bundle_lock.unlock();
+		return ate;
+	}
+
+	bool SnakeClient::didLose() {
+		this->bundle_lock.lock();
+		bool lost = this->bundle.lost;
+		this->bundle_lock.unlock();
+		return lost;
+	}
+
+	bool SnakeClient::didWin() {
+		this->bundle_lock.lock();
+		bool won = this->bundle.won;
+		this->bundle_lock.unlock();
+		return won;
 	}
 }
