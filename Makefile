@@ -5,18 +5,21 @@ CXXFLAGS=-lncurses -lportaudio -lpthread -std=c++11
 SERVER_EXE=snake-curses-server
 CLIENT_EXE=snake-curses-client
 
-SERVER_SRC=main.cpp \
-		   audio.cpp \
+COMMON_SRC=audio.cpp \
 		   body.cpp \
 		   physics.cpp \
 		   food.cpp \
 		   snake.cpp \
 		   keyboard.cpp \
+		   snake_sockets.cpp \
 		   tela.cpp \
 		   utils.cpp
 
+SERVER_SRC=main.cpp \
+		   $(COMMON_SRC)
+
 CLIENT_SRC=main_client.cpp \
-		   keyboard.cpp \
+		   $(COMMON_SRC)
 
 all: server client
 
