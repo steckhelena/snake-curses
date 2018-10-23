@@ -16,10 +16,10 @@ class Body {
 		Vector2D position;
 
 		char frame;
-		unsigned char color;
+		unsigned int color;
 
 	public:
-		Body(Vector2D speed, Vector2D position, char frame, unsigned char color);
+		Body(Vector2D speed, Vector2D position, char frame, unsigned int color);
 
 		Vector2D getPosition();
 		void setPosition(Vector2D position);
