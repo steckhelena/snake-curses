@@ -33,6 +33,9 @@ void Tela::appendList(BodyList *ldc) {
 
 // Target list is the list which will be used for centering the cam
 void Tela::update(BodyList *target) {
+	if (target->getBodies().empty()) {
+		return;
+	}
 	// Erases all screen bodies
 	erase();
 
