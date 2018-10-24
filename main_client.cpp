@@ -21,14 +21,14 @@ uint64_t get_now_ms() {
 
 int main () {
 	/*
-	Audio::Sample *on_food;
-	on_food = new Audio::Sample();
-	on_food->load("assets/blip.dat");
+	   Audio::Sample *on_food;
+	   on_food = new Audio::Sample();
+	   on_food->load("assets/blip.dat");
 
-	Audio::Player *player;
-	player = new Audio::Player();
-	player->init();
-	*/
+	   Audio::Player *player;
+	   player = new Audio::Player();
+	   player->init();
+	   */
 
 	Tela *tela = new Tela();
 	tela->init();
@@ -40,15 +40,23 @@ int main () {
 	BodyList *snake = new BodyList();
 
 	tela->appendList(everything);
-	
+
+	client.updateBodiesAndTarget(everything, snake);
+
+	tela->setMaxX(client.getMaxX());
+	tela->setMaxY(client.getMaxY());
+
 	while (client.isAlive()) {
-		client.updateBodies(everything);
-		client.updateTarget(snake);
+		client.updateBodiesAndTarget(everything, snake);
 
 		tela->update(snake);
 
-		std::this_thread::sleep_for (std::chrono::milliseconds(1));
+		std::this_thread::sleep_for (std::chrono::milliseconds(10));
 	}
+
+	delete everything;
+	delete snake;
+	delete tela;
 
 	return 0;
 }
