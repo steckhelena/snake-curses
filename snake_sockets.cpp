@@ -91,6 +91,7 @@ namespace SnakeSockets {
 	std::ostream& operator<<(std::ostream &strm, const SerializableBundle &a) {
 		strm << *a.snake << "\n";
 		strm << *a.all_bodies << "\n";
+		strm << a.max_size << "\n";
 		strm << a.lost << "\n";
 		strm << a.won << "\n";
 		strm << a.ate << "\n";
@@ -102,6 +103,7 @@ namespace SnakeSockets {
 		std::istringstream strm(serialized);
 		strm >> *this->snake;
 		strm >> *this->all_bodies;
+		strm >> this->max_size;
 		strm >> this->lost;
 		strm >> this->won;
 		strm >> this->ate;
@@ -127,10 +129,22 @@ namespace SnakeSockets {
 
 		this->base_bundle.all_bodies = new BodyList();
 		this->base_bundle.snake = new BodyList();
+		this->base_bundle.max_size = Vector2D(max_x, max_y);
 	}
 
 	SnakeServer::~SnakeServer() {
 		// TODO: close socket/join threads, do memory cleanup on bundle
+		delete this->food;
+		delete this->base_bundle.all_bodies;
+		delete this->base_bundle.snake;
+
+		for (ClientInfo *client: this->clients) {
+			delete client->snake;
+			delete client->physics;
+			delete client->kbd_server;
+			closeSocket(client->connection_fd);
+			delete client;
+		}
 	}
 
 	bool SnakeServer::init() {
@@ -157,7 +171,7 @@ namespace SnakeSockets {
 			ClientInfo *client = new ClientInfo();
 			client->connection_fd = connection_fd;
 			client->snake = new Snake(Vector2D(this->max_x/2 + 2*this->clients.size(), this->max_y/2),
-					Vector2D(0,this->snake_speed), 5, clients.size() + 1);
+					Vector2D(0,-this->snake_speed), 5, clients.size() + 1);
 			client->physics = new Physics(client->snake, food, this->max_food, this->max_x, this->max_y);
 			client->kbd_server = new KeyboardServer();
 			client->kbd_server->init(connection_fd);
@@ -272,8 +286,6 @@ namespace SnakeSockets {
 			std::ostringstream strm;
 			strm << bundle;
 
-			std::cout << "Sending: \n" << strm.str().c_str() << "\nSize: " << std::strlen(strm.str().c_str()) << std::endl;
-
 			if (send_int(client->connection_fd, strm.str().length()) == -1) {
 				client->running = false;
 				client->send_now = false;
@@ -297,10 +309,17 @@ namespace SnakeSockets {
 	SnakeClient::SnakeClient() {
 		this->bundle.all_bodies = new BodyList();
 		this->bundle.snake = new BodyList();
+		this->got_first_package = false;
+		this->did_update = false;
 	}
 
 	SnakeClient::~SnakeClient() {
 		// TODO: close socket/join threads, do memory cleanup on bundle
+		this->kbd_client.stop();
+		this->client_thread.join();
+		closeSocket(this->socket_fd);
+		delete this->bundle.all_bodies;
+		delete this->bundle.snake;
 	}
 
 	bool SnakeClient::init(std::string ip) {
@@ -368,25 +387,28 @@ namespace SnakeSockets {
 				// while it is being updated
 				this->bundle_lock.lock();
 				this->bundle.rebuildFromString(message_string);
+				this->did_update = true;
 				this->bundle_lock.unlock();
 				myfile << "Bundle is now: " << this->bundle << std::endl;
 			}
 
+			this->got_first_package = true;
+			delete[] message_buff;
 		}
 		myfile.close();
 	}
 
-	void SnakeClient::updateBodies(BodyList *bl) {
-		this->bundle_lock.lock();
-		bl->clear();
-		bl->append(*this->bundle.all_bodies);
-		this->bundle_lock.unlock();
-	}
+	void SnakeClient::updateBodiesAndTarget(BodyList *bl, BodyList *target) {
+		while (!this->got_first_package);
 
-	void SnakeClient::updateTarget(BodyList *bl) {
 		this->bundle_lock.lock();
-		bl->clear();
-		bl->append(*this->bundle.snake);
+		if (this->did_update) {
+			bl->clear();
+			bl->append(*this->bundle.all_bodies);
+			target->clear();
+			target->append(*this->bundle.snake); 
+			this->did_update = false;
+		}
 		this->bundle_lock.unlock();
 	}
 
@@ -413,5 +435,13 @@ namespace SnakeSockets {
 		bool won = this->bundle.won;
 		this->bundle_lock.unlock();
 		return won;
+	}
+
+	int SnakeClient::getMaxX() {
+		return this->bundle.max_size.x;
+	}
+
+	int SnakeClient::getMaxY() {
+		return this->bundle.max_size.y;
 	}
 }

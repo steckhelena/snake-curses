@@ -31,6 +31,8 @@ namespace SnakeSockets {
 
 			void rebuildFromString(std::string &str);
 
+			Vector2D max_size;
+
 			bool lost;
 			bool won;
 			bool ate;
@@ -87,10 +89,12 @@ namespace SnakeSockets {
 			KeyboardClient kbd_client;
 			std::thread client_thread;
 			void updateBundle();
+			bool did_update;
 
 			// Socket stuff
 			int socket_fd;
 			struct sockaddr_in target;
+			bool got_first_package;
 			
 			SerializableBundle bundle;
 		
@@ -100,13 +104,15 @@ namespace SnakeSockets {
 
 			bool init(std::string ip);
 
-			void updateBodies(BodyList *bl);
-			void updateTarget(BodyList *b);
+			void updateBodiesAndTarget(BodyList *bl, BodyList *taget);
 
 			bool isAlive();
 			bool didEat();
 			bool didLose();
 			bool didWin();
+
+			int getMaxX();
+			int getMaxY();
 	};
 }
 
