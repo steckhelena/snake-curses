@@ -72,14 +72,20 @@ namespace SnakeSockets {
 			socklen_t client_size;
 			struct sockaddr_in myself, client;
 
+			// Internal stuff no one gives a sh*t about
+			void killClient(ClientInfo *client);
+
 		public:
 			SnakeServer(double snake_speed, int max_food, int max_score, int max_x, int max_y, int max_clients);
 			~SnakeServer();
 
-			bool init();
+			bool init(std::string ip="");
 			void update(float deltaT);
 
 			bool didEnd();
+			int getConnectedClientsNumber();
+
+			void forceShutdown();
 	};
 
 	class SnakeClient {
