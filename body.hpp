@@ -8,8 +8,6 @@
 
 #include "utils.hpp"
 
-using namespace std;
-
 class Body {
 	private:
 		Vector2D speed;
@@ -36,7 +34,7 @@ class Body {
 
 class BodyList {
 	protected:
-		vector<Body *> bodies;
+		std::vector<Body *> bodies;
 
 	public:
 		~BodyList();
@@ -47,7 +45,7 @@ class BodyList {
 		void removeAt(int i);
 		void clear();
 
-		vector<Body*> &getBodies();
+		std::vector<Body*> &getBodies();
 
 		friend std::ostream& operator<<(std::ostream &strm, const BodyList &a);
 		friend std::istream& operator>>(std::istream &strm, BodyList &a);
