@@ -39,6 +39,8 @@ class BodyList {
 		vector<Body *> bodies;
 
 	public:
+		~BodyList();
+
 		void addBody(Body &c);
 		void append(BodyList &c);
 
