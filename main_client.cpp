@@ -20,21 +20,23 @@ uint64_t get_now_ms() {
 }
 
 int main () {
-	/*
-	   Audio::Sample *on_food;
-	   on_food = new Audio::Sample();
-	   on_food->load("assets/blip.dat");
+	Audio::Sample *on_food;
+	on_food = new Audio::Sample();
+	on_food->load("assets/blip.dat");
 
-	   Audio::Player *player;
-	   player = new Audio::Player();
-	   player->init();
-	   */
+	Audio::Player *player;
+	player = new Audio::Player();
+	player->init();
 
 	Tela *tela = new Tela();
 	tela->init();
 
 	SnakeSockets::SnakeClient client;
-	client.init("127.0.0.1");
+	if (!client.init("127.0.0.1")) {
+		delete tela;
+		std::cerr << "Couldn't stabilish connection to server, are you sure the ip is correct?" << std::endl;
+		exit(-1);
+	}
 
 	BodyList *everything = new BodyList();
 	BodyList *snake = new BodyList();
@@ -48,8 +50,14 @@ int main () {
 
 	while (client.isAlive()) {
 		client.updateBodiesAndTarget(everything, snake);
+		bool ate = client.didEat();
 
 		tela->update(snake);
+		if (ate) {
+			on_food->set_position(0);
+			player->play(on_food);
+			on_food->reverse();
+		}
 
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
 	}
