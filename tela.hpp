@@ -16,11 +16,16 @@ class Tela {
 		~Tela();
 		void stop();
 		void init();
+
 		void appendList(BodyList *ldc);
 		void update(BodyList *target);
 		void showText(string text);
-		int getMaxX();
-		int getMaxY();
+
+		int getMaxHeight();
+		int getMaxWidth();
+
+		void setMaxX(int max_x);
+		void setMaxY(int max_y);
 };
 
 #endif //TELA_HPP
