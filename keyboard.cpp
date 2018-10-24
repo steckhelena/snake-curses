@@ -133,25 +133,19 @@ KeyboardClient::~KeyboardClient() {
 }
 
 void KeyboardClient::thread () {
-	char c, quit;
+	char c;
 	while (this->running) {
 		c = getch();
 		if (c!=ERR) {
-			int msglen = recv(this->socket_fd, &quit, 1, MSG_DONTWAIT);
-			if (msglen == 0) {
-				this->running = false;
-			} else if (send(this->socket_fd, &c, 1, 0) == -1) {
+			if (send(this->socket_fd, &c, 1, 0) == -1) {
 				this->running = false;
 			}
 			if (c == 'q') {
-				close(this->socket_fd);
 				this->running = false;
-				break;
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
-	return;
 }
 
 bool KeyboardClient::isAlive() {
