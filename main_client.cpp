@@ -32,11 +32,13 @@ int main () {
 	tela->init();
 
 	SnakeSockets::SnakeClient client;
-	if (!client.init("127.0.0.1")) {
+	if (!client.init(tela->showPrompt("Enter server ip address: "))) {
 		delete tela;
 		std::cerr << "Couldn't stabilish connection to server, are you sure the ip is correct?" << std::endl;
 		exit(-1);
 	}
+
+	tela->showText("Connected! Waiting for other clients!");
 
 	BodyList *everything = new BodyList();
 	BodyList *snake = new BodyList();
