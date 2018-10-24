@@ -50,7 +50,7 @@ void Physics::update(float deltaT) {
 		
 		// Updates position of all snake parts
 		delta_position = Vector2D((int) delta_position.x, (int) delta_position.y);
-		vector<Body*> &b = this->snake->getBodies();
+		std::vector<Body*> &b = this->snake->getBodies();
 		Vector2D ahead_position = delta_position + this->snake->getHeadPosition();
 		Vector2D ahead_speed = this->snake->getHeadSpeed();
 		for (Body *body: b) {
@@ -72,7 +72,7 @@ void Physics::update(float deltaT) {
 		}
 		
 		// Checks if snake didn't collide with itself.
-		vector<Vector2D> positions;
+		std::vector<Vector2D> positions;
 		for (Body *body: b) {
 			Vector2D current = body->getPosition();
 			for (Vector2D pos: positions) {
