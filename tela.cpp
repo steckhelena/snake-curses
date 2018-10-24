@@ -81,10 +81,69 @@ void Tela::update(BodyList *target) {
 	refresh();
 }
 
-void Tela::showText(string text) {
+void Tela::showText(std::string text) {
 	clear();
 	mvprintw(this->height/2, (this->width/2)-text.length()/2, text.c_str());
 	refresh();
+}
+
+std::string Tela::showPrompt(std::string prompt) {
+	clear();
+
+	std::string message = "(Press enter when done)";
+	mvprintw(this->height/2, (this->width/2)-prompt.length()/2, prompt.c_str());
+	mvprintw(this->height/2 + 1, (this->width/2)-message.length()/2, message.c_str());
+
+	int c;
+	noecho();
+
+	char buffer[16];
+	buffer[0] = '\0';
+	int i = 0;
+	move(this->height/2 + 3, (this->width/2));
+	bool reading = true;
+	while(reading) {
+		c = getch();
+		switch(c) {
+			case('\n'):
+			case('\r'):
+			case(KEY_ENTER):
+				reading=false;
+				break;
+			case(127):
+			case(KEY_DC):
+			case(KEY_BACKSPACE):
+				if (i != 0) {
+					i--;
+					buffer[i] = '\0';
+				}
+				break;
+			case('0'):
+			case('1'):
+			case('2'):
+			case('3'):
+			case('4'):
+			case('5'):
+			case('6'):
+			case('7'):
+			case('8'):
+			case('9'):
+			case('.'):
+				if (i < 15) {
+					buffer[i++] = c;
+					buffer[i] = '\0';
+				}
+				break;
+			default:
+				break;
+		}
+		move(this->height/2 + 3, 0);
+		clrtoeol();
+		mvprintw(this->height/2 + 3, (this->width/2)-i/2, buffer);
+	}
+
+	clear();
+	return std::string(buffer);
 }
 
 void Tela::makeBorder(BodyList *target) {
