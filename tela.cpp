@@ -36,8 +36,17 @@ void Tela::update(BodyList *target) {
 	if (target->getBodies().empty()) {
 		return;
 	}
+
+	static unsigned int clear_interval = 0;
+
 	// Erases all screen bodies
-	erase();
+	if (clear_interval%1000) {
+		clear();
+	} else {
+		erase();
+	}
+
+	clear_interval++;
 
 	// Draws game borders relative to target
 	makeBorder(target);
@@ -84,10 +93,10 @@ void Tela::makeBorder(BodyList *target) {
 	int global_offset_y = target->getBodies().front()->getPosition().y;
 
 	int x_left = (0 - global_offset_x) + this->width/2;
-	int x_right = (this->width - global_offset_x) + this->width/2;
+	int x_right = (this->max_x - global_offset_x) + this->width/2;
 
 	int y_bot = (0 - global_offset_y) + this->height/2;
-	int y_top = (this->height - global_offset_y) + this->height/2;
+	int y_top = (this->max_y - global_offset_y) + this->height/2;
 
 	for (int x=x_left; x<x_right; x++) {
 		if (x > 0 && x < this->width) {
@@ -116,12 +125,20 @@ void Tela::makeBorder(BodyList *target) {
 	}
 }
 
-int Tela::getMaxX() {
+int Tela::getMaxWidth() {
 	return this->width;
 }
 
-int Tela::getMaxY() {
+int Tela::getMaxHeight() {
 	return this->height;
+}
+
+void Tela::setMaxX(int max_x) {
+	this->max_x = max_x;
+}
+
+void Tela::setMaxY(int max_y) {
+	this->max_y = max_y;
 }
 
 void Tela::stop() {
