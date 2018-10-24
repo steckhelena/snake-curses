@@ -34,6 +34,9 @@ static void closeSocket(int fd) {
 				std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
 			}
 		}
+		// Waits to receive FIN
+		char alo;
+		while (recv(fd, &alo, 1, 0) > 0);
 		if (close(fd) < 0) {// finally call close()
 			std::cerr << "Error on socket shutdown: " << std::strerror(errno) << std::endl;
 		}
@@ -45,7 +48,7 @@ static int send_int(int fd, int num) {
 	char *data = (char*)&conv;
 	int left = sizeof(conv);
 	int rc;
-	do {
+	while (left > 0) {
 		rc = send(fd, data, left, 0);
 		if (rc < 0) {
 			if (errno != EINTR) {
@@ -57,7 +60,6 @@ static int send_int(int fd, int num) {
 			left -= rc;
 		}
 	}
-	while (left > 0);
 	return 0;
 }
 
@@ -66,19 +68,16 @@ static int receive_int(int fd, int *num) {
 	char *data = (char*)&ret;
 	int left = sizeof(ret);
 	int rc;
-	do {
+	while (left > 0) {
 		rc = recv(fd, data, left, 0);
 		if (rc <= 0) {
-			if (errno != EINTR) {
-				return -1;
-			}
+			return -1;
 		}
 		else {
 			data += rc;
 			left -= rc;
 		}
 	}
-	while (left > 0);
 	*num = ntohl(ret);
 	return 0;
 }
@@ -124,6 +123,7 @@ namespace SnakeSockets {
 		this->max_clients = max_clients;
 
 		this->started = false;
+		this->ended = false;
 
 		this->food = new Food(this->max_x, this->max_y, 0);
 
@@ -133,26 +133,59 @@ namespace SnakeSockets {
 	}
 
 	SnakeServer::~SnakeServer() {
-		// TODO: close socket/join threads, do memory cleanup on bundle
 		delete this->food;
 		delete this->base_bundle.all_bodies;
 		delete this->base_bundle.snake;
 
-		for (ClientInfo *client: this->clients) {
+		this->forceShutdown();
+
+		fsync(this->socket_fd);
+		closeSocket(this->socket_fd);
+	}
+
+	void SnakeServer::killClient(ClientInfo *client) {
+			if (!client) {
+				return;
+			}
+
+			client->running = false;
 			delete client->snake;
 			delete client->physics;
 			delete client->kbd_server;
-			closeSocket(client->connection_fd);
+			if (client->client_thread.joinable()) {
+				client->client_thread.join();
+			}
 			delete client;
+	}
+
+	void SnakeServer::forceShutdown() {
+		for (ClientInfo *client: this->clients) {
+			this->killClient(client);
 		}
 	}
 
-	bool SnakeServer::init() {
+	int SnakeServer::getConnectedClientsNumber() {
+		int number_of_clients = 0;
+
+		for (ClientInfo *client: this->clients) {
+			if (client->running) {
+				number_of_clients++;
+			}
+		}
+
+		return number_of_clients;
+	}
+
+	bool SnakeServer::init(std::string ip) {
 		this->client_size = (socklen_t)sizeof(this->client);
 		this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 		this->myself.sin_family = AF_INET;
 		this->myself.sin_port = htons(KEYBOARD_PORT);
-		this->myself.sin_addr.s_addr = htonl(INADDR_ANY);
+		if (ip.empty()) {
+			this->myself.sin_addr.s_addr = htonl(INADDR_ANY);
+		} else {
+			inet_aton(ip.c_str(), &(this->myself.sin_addr));
+		}
 		if (bind(this->socket_fd, (struct sockaddr*)&this->myself, sizeof(this->myself)) != 0) {
 			std::cerr << "Error binding: " << std::strerror(errno) << std::endl;
 			return false;
@@ -241,12 +274,11 @@ namespace SnakeSockets {
 				while (client->update_now);
 			}
 		}
-
 	}
 
 	void SnakeServer::updateClient(ClientInfo *client) {
 		while (client->running) {
-			while (!client->update_now) {
+			while (!client->update_now && client->running) {
 				char c = client->kbd_server->getchar();
 				if (this->started) {
 					if (c=='w') {
@@ -266,12 +298,11 @@ namespace SnakeSockets {
 			if (!client->kbd_server->isAlive()) {
 				client->running = false;
 				client->update_now = false;
-				closeSocket(client->connection_fd);
 			}
 			client->physics->update(this->deltaT);
 			client->update_now = false;
 
-			while (!client->send_now);
+			while (!client->send_now && client->running);
 
 			SerializableBundle bundle = this->base_bundle;
 			bundle.ate = client->physics->didEat();
@@ -289,15 +320,19 @@ namespace SnakeSockets {
 			if (send_int(client->connection_fd, strm.str().length()) == -1) {
 				client->running = false;
 				client->send_now = false;
-				closeSocket(client->connection_fd);
 			} else if (send(client->connection_fd, strm.str().c_str(), strm.str().length(), 0) == -1) {
 				client->running = false;
 				client->send_now = false;
-				closeSocket(client->connection_fd);
 			}
 
 			client->send_now = false;
 		}
+		std::cout << "Closing socket" << std::endl;
+		closeSocket(client->connection_fd);
+	}
+
+	bool SnakeServer::didEnd() {
+		return this->ended;
 	}
 }
 
@@ -314,10 +349,11 @@ namespace SnakeSockets {
 	}
 
 	SnakeClient::~SnakeClient() {
-		// TODO: close socket/join threads, do memory cleanup on bundle
 		this->kbd_client.stop();
-		this->client_thread.join();
 		closeSocket(this->socket_fd);
+		if (this->client_thread.joinable()) {
+			this->client_thread.join();
+		}
 		delete this->bundle.all_bodies;
 		delete this->bundle.snake;
 	}
@@ -347,10 +383,7 @@ namespace SnakeSockets {
 	}
 
 	void SnakeClient::updateBundle() {
-		std::ofstream myfile;
-		myfile.open ("example.txt", ios::out);
-
-		while (this->kbd_client.isAlive()){
+		while (this->isAlive()){
 			int message_size;
 
 			if (receive_int(this->socket_fd, &message_size) == -1) {
@@ -358,13 +391,11 @@ namespace SnakeSockets {
 				break;
 			}
 
-			myfile << "To receive: " << message_size << std::endl;
-
 			char *message_buff = new char[message_size+1];
 			char *message_pointer = message_buff;
 			int bytes_left = message_size;
 
-			while (bytes_left > 0 && this->kbd_client.isAlive()) {
+			while (bytes_left > 0 && this->isAlive()) {
 				int last_read_size = recv(this->socket_fd, message_pointer, bytes_left, 0);
 				if (last_read_size <= 0) {
 					this->kbd_client.stop();
@@ -377,29 +408,32 @@ namespace SnakeSockets {
 			// Makes sure message is null terminated
 			message_buff[message_size] = '\0';
 
-			if (this->kbd_client.isAlive()) {
+			if (this->isAlive()) {
 				// Converts buffer to string
 				std::string message_string(message_buff);
-
-				myfile << "Received: \n" << message_string;
 
 				// Critical session, locks to prevent bundle being read 
 				// while it is being updated
 				this->bundle_lock.lock();
+				bool ate = false;
+				if (this->bundle.ate) {
+					ate = true;
+				}
 				this->bundle.rebuildFromString(message_string);
+				if (!this->bundle.ate) {
+					this->bundle.ate = ate;
+				}
 				this->did_update = true;
 				this->bundle_lock.unlock();
-				myfile << "Bundle is now: " << this->bundle << std::endl;
 			}
 
 			this->got_first_package = true;
 			delete[] message_buff;
 		}
-		myfile.close();
 	}
 
 	void SnakeClient::updateBodiesAndTarget(BodyList *bl, BodyList *target) {
-		while (!this->got_first_package);
+		while (!this->got_first_package && this->isAlive());
 
 		this->bundle_lock.lock();
 		if (this->did_update) {
@@ -419,6 +453,7 @@ namespace SnakeSockets {
 	bool SnakeClient::didEat() {
 		this->bundle_lock.lock();
 		bool ate = this->bundle.ate;
+		this->bundle.ate = false;
 		this->bundle_lock.unlock();
 		return ate;
 	}
