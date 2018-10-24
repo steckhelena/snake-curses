@@ -19,7 +19,9 @@ class Tela {
 
 		void appendList(BodyList *ldc);
 		void update(BodyList *target);
-		void showText(string text);
+
+		void showText(std::string text);
+		std::string showPrompt(std::string prompt);
 
 		int getMaxHeight();
 		int getMaxWidth();
