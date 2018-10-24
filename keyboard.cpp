@@ -54,13 +54,12 @@ void KeyboardServer::thread () {
 	if (this->is_owner) {
 		closeSocket(this->connection_fd);
 	}
+	std::cout << "Client disconnected!" << std::endl;
 	return;
 }
 
 KeyboardServer::~KeyboardServer() {
-	if (this->running) {
-		this->stop();
-	}
+	this->stop();
 	if (is_owner) {
 		closeSocket(this->socket_fd);
 	}
@@ -111,7 +110,9 @@ bool KeyboardServer::init(int connection_fd) {
 
 void KeyboardServer::stop() {
 	this->running = false;
-	(this->kb_thread).join();
+	if (this->kb_thread.joinable()) {
+		this->kb_thread.join();
+	}
 }
 
 char KeyboardServer::getchar() {
@@ -127,9 +128,7 @@ char KeyboardServer::getchar() {
  * KeyboardClient
  ************************************************************************/
 KeyboardClient::~KeyboardClient() {
-	if (this->running) {
-		this->stop();
-	}
+	this->stop();
 }
 
 void KeyboardClient::thread () {
@@ -201,9 +200,11 @@ bool KeyboardClient::init(std::string ip) {
 
 void KeyboardClient::stop() {
 	this->running = false;
-	(this->kb_thread).join();
-	if (this->is_owner) {
-		closeSocket(this->socket_fd);
+	if (this->kb_thread.joinable()) {
+		this->kb_thread.join();
+		if (this->is_owner) {
+			closeSocket(this->socket_fd);
+		}
+		endwin();
 	}
-	endwin();
 }
