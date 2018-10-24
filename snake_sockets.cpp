@@ -185,11 +185,15 @@ namespace SnakeSockets {
 			this->myself.sin_addr.s_addr = htonl(INADDR_ANY);
 		} else {
 			inet_aton(ip.c_str(), &(this->myself.sin_addr));
-		}
-		if (bind(this->socket_fd, (struct sockaddr*)&this->myself, sizeof(this->myself)) != 0) {
-			std::cerr << "Error binding: " << std::strerror(errno) << std::endl;
-			return false;
-		}
+		} 
+
+		{ // Begin gambiarra
+			using namespace std;
+			if (::bind(this->socket_fd, (struct sockaddr*)&this->myself, sizeof(this->myself)) != 0) {
+				std::cerr << "Error binding: " << std::strerror(errno) << std::endl;
+				return false;
+			}
+		} // End gambiarra
 
 		// Listens for connections
 		listen(this->socket_fd, 1);
