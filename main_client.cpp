@@ -32,7 +32,7 @@ int main () {
 	tela->init();
 
 	SnakeSockets::SnakeClient client;
-	if (!client.init(tela->showPrompt("Enter server ip address: "))) {
+	if (!client.init(tela->showIpPrompt("Enter server ip address: "))) {
 		delete tela;
 		std::cerr << "Couldn't stabilish connection to server, are you sure the ip is correct?" << std::endl;
 		exit(-1);
@@ -62,6 +62,13 @@ int main () {
 		}
 
 		std::this_thread::sleep_for (std::chrono::milliseconds(10));
+	}
+
+	if (client.didLose()) {
+		tela->showTextBlocking("Hey mate, i'm sorry but you get nothing, you lose! Good day sir!");
+	}
+	if (client.didWin()) {
+		tela->showTextBlocking("Congratulations, you won!! :)");
 	}
 
 	delete everything;
