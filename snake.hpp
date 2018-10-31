@@ -13,6 +13,7 @@ class Snake: public BodyList {
 		void setHeadSpeed(Vector2D new_speed);
 		Vector2D getHeadPosition();
 		void grow();
+		void shrink();
 };
 		
 
