@@ -1,9 +1,13 @@
 // Autor: Marco Antonio Steck Filho - RA:183374
 
-// Third-party includes
-#include <ncurses.h>
+// Standar includes
+#include <chrono>
+#include <thread>
 #include <vector>
 #include <iostream>
+
+// Third-party includes
+#include <ncurses.h>
 
 // Private includes
 #include "body.hpp"
@@ -87,7 +91,30 @@ void Tela::showText(std::string text) {
 	refresh();
 }
 
-std::string Tela::showPrompt(std::string prompt) {
+void Tela::showTextBlocking(std::string text) {
+	int c;
+	bool waiting = true;
+	while (waiting) {
+		c = getch();
+		switch(c) {
+			case('\n'):
+			case('\r'):
+			case(KEY_ENTER):
+				waiting=false;
+				break;
+			default:
+				break;
+		}
+		clear();
+		mvprintw(this->height/2, (this->width/2)-text.length()/2, text.c_str());
+		std::string message = "(Press enter to close this message)";
+		mvprintw(this->height/2+1, (this->width/2)-message.length()/2, message.c_str());
+		refresh();
+		std::this_thread::sleep_for (std::chrono::milliseconds(500));
+	}
+}
+
+std::string Tela::showIpPrompt(std::string prompt) {
 	clear();
 
 	std::string message = "(Press enter when done)";

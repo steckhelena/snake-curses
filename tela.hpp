@@ -21,7 +21,8 @@ class Tela {
 		void update(BodyList *target);
 
 		void showText(std::string text);
-		std::string showPrompt(std::string prompt);
+		void showTextBlocking(std::string text);
+		std::string showIpPrompt(std::string prompt);
 
 		int getMaxHeight();
 		int getMaxWidth();
