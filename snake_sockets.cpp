@@ -247,7 +247,27 @@ namespace SnakeSockets {
 			}
 		}
 
-		// TODO: Check for collisons between clients
+		// Check for collisons between clients
+		std::vector<ClientInfo *> to_collide;
+		for (ClientInfo *client: this->clients) {
+			for (ClientInfo *other: this->clients) {
+				if (client == other) {
+					continue;
+				}
+				for (Body *other_body: other->snake->getBodies()) {
+					if (other_body->getPosition() == client->snake->getHeadPosition()) {
+						to_collide.push_back(client);
+						break;
+					}
+				}
+			}
+		}
+
+		// Shrinks all collided snakes:
+		for (ClientInfo *client: to_collide) {
+			client->snake->shrink();
+			client->physics->resetDeltas();
+		}
 
 		// Builds base bundle
 		this->base_bundle.all_bodies->clear();
@@ -258,10 +278,26 @@ namespace SnakeSockets {
 			}
 		}
 
-		// Checks if someone won
+		// Checks if someone won because others lost
+		int clients_lost = 0;
 		for (ClientInfo *client: this->clients) {
-			if (client->physics->didWin()) {
-				this->ended = true;
+			if (client->physics->didLose() || !client->running) {
+				clients_lost++;
+			}
+		}
+		if (clients_lost >= this->max_clients-1) {
+			for (ClientInfo *client: this->clients) {
+				if (!client->physics->didLose() && client->running) {
+					client->physics->setWin();
+				}
+			}
+			this->ended = true;
+		} else {
+			// Checks if someone won
+			for (ClientInfo *client: this->clients) {
+				if (client->physics->didWin()) {
+					this->ended = true;
+				}
 			}
 		}
 
@@ -426,6 +462,9 @@ namespace SnakeSockets {
 				this->bundle.rebuildFromString(message_string);
 				if (!this->bundle.ate) {
 					this->bundle.ate = ate;
+				}
+				if (this->bundle.lost || this->bundle.won) {
+					this->kbd_client.stop();
 				}
 				this->did_update = true;
 				this->bundle_lock.unlock();
