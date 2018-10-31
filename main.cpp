@@ -88,7 +88,7 @@ int main () {
 	uint64_t t0, t1, deltaT, timeEnd=0;
 	uint64_t last_second;
 
-	SnakeSockets::SnakeServer server(12.0, 10, 10, 100, 50, 1);
+	SnakeSockets::SnakeServer server(1.5, 10, 10, 100, 50, 2);
 	if (server.init(selectIP())) {
 		std::cout << "All clients connected! Starting game!" << std::endl;
 	}
@@ -110,7 +110,7 @@ int main () {
 		}
 
 		if (server.didEnd() && last_second != (get_now_ms() - timeEnd)/1000) {
-			std::cout << "Server forcibly closing in " << (maxEndTime - last_second) << " seconds!" << std::endl;
+			std::cout << "Server forcibly closing in " << (maxEndTime/1000 - last_second) << " seconds!" << std::endl;
 			last_second = (get_now_ms()-timeEnd)/1000;
 		}
 
