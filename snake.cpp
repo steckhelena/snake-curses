@@ -11,7 +11,6 @@ Snake::Snake(Vector2D position, Vector2D speed, int size, unsigned char color) {
 	}
 }
 
-
 Vector2D Snake::getHeadSpeed() {
 	return this->getBodies().front()->getSpeed();
 }
@@ -34,4 +33,10 @@ void Snake::grow() {
 	}
 	Body snake_part(last->getSpeed(), delta_position, SNAKE_CHAR, last->getColor());
 	this->addBody(snake_part);
+}
+
+void Snake::shrink() {
+	Vector2D head_speed(this->getHeadSpeed());
+	this->removeAt(0);
+	this->setHeadSpeed(head_speed);
 }
