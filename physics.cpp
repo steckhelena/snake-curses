@@ -63,7 +63,7 @@ void Physics::update(float deltaT) {
 		}
 		// Resets delta so it doesnt accumulate forever
 		// May slow down snake if the loop takes too long
-		lastDelta = this->snake->getHeadPosition();
+		this->resetDeltas();
 		
 		// Checks if snake is in boundaries
 		if (lastDelta.x <= 0 || (int) lastDelta.x >= this->maxX ||\
@@ -158,6 +158,18 @@ void Physics::goRight() {
 	} else {
 		this->action_queue.push(std::bind(&Physics::goRight, this));
 	}
+}
+
+void Physics::resetDeltas() {
+	this->lastDelta = this->snake->getHeadPosition();
+}
+
+void Physics::setLoss() {
+	this->lost = true;
+}
+
+void Physics::setWin() {
+	this->win = true;
 }
 
 bool Physics::didWin() {
