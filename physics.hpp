@@ -40,6 +40,7 @@ class Physics {
 	public:
 		Physics(Snake *s, Food *food, int max_food, int maxX, int maxY);
 		void update(float deltaT);
+		void collide();
 		void resetDeltas();
 		void setLoss();
 		void setWin();
