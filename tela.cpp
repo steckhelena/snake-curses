@@ -24,11 +24,22 @@ void Tela::init() {
 	this->height -= 1;
 
 	// Starts game color system
-	start_color();
-	init_pair(1, COLOR_RED, COLOR_BLACK);
-	attron(A_BOLD);
-	clear();
-	color_set(1, NULL);
+	if (has_colors() == TRUE) {
+		start_color();
+		init_pair(1, COLOR_RED, COLOR_BLACK);
+		init_pair(2, COLOR_GREEN, COLOR_BLACK);
+		init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+		init_pair(4, COLOR_BLUE, COLOR_BLACK);
+		init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+		init_pair(6, COLOR_CYAN, COLOR_BLACK);
+		init_pair(7, COLOR_WHITE, COLOR_BLACK);
+		init_pair(8, COLOR_RED, COLOR_WHITE);
+		init_pair(9, COLOR_GREEN, COLOR_WHITE);
+		init_pair(10, COLOR_YELLOW, COLOR_WHITE);
+		attron(A_BOLD);
+		clear();
+		color_set(1, NULL);
+	}
 }
 
 void Tela::appendList(BodyList *ldc) {
@@ -74,10 +85,12 @@ void Tela::update(BodyList *target) {
 			y = (y - global_offset_y) + this->height/2;
 
 			// Prints object if inside the screen
+			attron(COLOR_PAIR(body->getColor()));
 			if ((x>=0 && x<this->width) && (y>=0 && y<this->height)) {
 				move(y, x);
 				addch(ch);
 			}
+			attroff(COLOR_PAIR(body->getColor()));
 		}
 	}
 
