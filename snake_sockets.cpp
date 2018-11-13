@@ -265,8 +265,7 @@ namespace SnakeSockets {
 
 		// Shrinks all collided snakes:
 		for (ClientInfo *client: to_collide) {
-			client->snake->shrink();
-			client->physics->resetDeltas();
+			client->physics->collide();
 		}
 
 		// Builds base bundle

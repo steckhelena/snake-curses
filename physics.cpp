@@ -68,7 +68,7 @@ void Physics::update(float deltaT) {
 		// Checks if snake is in boundaries
 		if (lastDelta.x <= 0 || (int) lastDelta.x >= this->maxX ||\
 			   	lastDelta.y <= 0 || (int)lastDelta.y >= this->maxY) {
-			this->lost = true;
+			this->collide();
 		}
 		
 		// Checks if snake didn't collide with itself.
@@ -105,7 +105,18 @@ void Physics::update(float deltaT) {
 		if (this->score >= MAX_SCORE) {
 			this->win = true;
 		}
+
+		// Checks if snake hit minimum score
+		if (this->score <= MIN_SCORE) {
+			this->lost = true;
+		}
 	}
+}
+
+void Physics::collide() {
+	this->snake->shrink();
+	this->score--;
+	this->resetDeltas();
 }
 
 void Physics::goUp() {

@@ -5,6 +5,7 @@
 
 #define WALL_CHAR '#'
 #define MAX_SCORE 10
+#define MIN_SCORE -3
 
 class Vector2D {
 	public:
