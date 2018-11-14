@@ -87,8 +87,12 @@ std::string selectIP() {
 int main () {
 	uint64_t t0, t1, deltaT, timeEnd=0;
 	uint64_t last_second;
+	int number_of_players;
 
-	SnakeSockets::SnakeServer server(1.5, 10, 10, 100, 50, 2);
+	std::cout << "Please input the number of players: ";
+	std::cin >> number_of_players;
+
+	SnakeSockets::SnakeServer server(12, 10, 10, 100, 50, number_of_players);
 	if (server.init(selectIP())) {
 		std::cout << "All clients connected! Starting game!" << std::endl;
 	}
