@@ -100,7 +100,9 @@ int main () {
 		deltaT = t1-t0;
 
 		// Atualiza clientes
-		server.update(deltaT);
+		if (!server.didEnd()) {
+			server.update(deltaT);
+		}
 
 		if (timeEnd == 0 && server.didEnd()) {
 			std::cout << "Game finished with at least one winner!" << std::endl;
