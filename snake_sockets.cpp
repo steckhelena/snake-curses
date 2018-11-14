@@ -284,7 +284,9 @@ namespace SnakeSockets {
 				clients_lost++;
 			}
 		}
-		if (clients_lost >= this->max_clients-1) {
+		if (this->max_clients == 1 && clients_lost == 1) {
+			this->ended = true;
+		} else if (this->max_clients > 1 && clients_lost >= this->max_clients-1) {
 			for (ClientInfo *client: this->clients) {
 				if (!client->physics->didLose() && client->running) {
 					client->physics->setWin();
