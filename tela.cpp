@@ -85,12 +85,19 @@ void Tela::update(BodyList *target) {
 			y = (y - global_offset_y) + this->height/2;
 
 			// Prints object if inside the screen
-			attron(COLOR_PAIR(body->getColor()));
-			if ((x>=0 && x<this->width) && (y>=0 && y<this->height)) {
-				move(y, x);
-				addch(ch);
+			if (has_colors() == TRUE) {
+				attron(COLOR_PAIR(body->getColor()));
+				if ((x>=0 && x<this->width) && (y>=0 && y<this->height)) {
+					move(y, x);
+					addch(ch);
+				}
+				attroff(COLOR_PAIR(body->getColor()));
+			} else {
+				if ((x>=0 && x<this->width) && (y>=0 && y<this->height)) {
+					move(y, x);
+					addch(ch);
+				}
 			}
-			attroff(COLOR_PAIR(body->getColor()));
 		}
 	}
 
